@@ -13,7 +13,7 @@ const current = (to: string) => (to === "/" ? route.path === "/" : route.path.st
     <div class="mx-auto flex h-14 max-w-[1264px] items-center justify-between gap-3 px-4 md:h-16 md:px-8">
       <NuxtLink
         to="/"
-        aria-label="Visaproof, search"
+        aria-label="visaproof.azamatos, search"
         class="inline-flex min-h-11 items-center text-[13px] no-underline md:text-[15px]"
       >
         <Wordmark />
