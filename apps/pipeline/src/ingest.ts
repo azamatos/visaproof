@@ -4,6 +4,7 @@ import { HttpError, pool } from "./http.ts";
 import { inScope, where } from "./location.ts";
 import { familyOf, seniorityOf } from "./roles.ts";
 import { payOf, signals } from "./signals.ts";
+import { TECHNOLOGIES_VERSION, technologiesOf } from "./technologies.ts";
 import { hash } from "./text.ts";
 
 type Company = Board & {
@@ -247,5 +248,7 @@ function facts(p: RawPosting) {
     salary_raw: p.salary ?? null,
     pay: pay ? sql.json(pay) : null,
     signals: p.description ? sql.json(signals(text)) : null,
+    technologies: technologiesOf(p.title, p.description),
+    technologies_version: TECHNOLOGIES_VERSION,
   };
 }

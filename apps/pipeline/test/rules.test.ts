@@ -10,6 +10,7 @@ import { excerpt, locate } from "../src/extract.ts";
 import { languageExcerpt, needsReading, verify } from "../src/languages.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { MENTIONS_RE, payOf, signals } from "../src/signals.ts";
+import { technologiesOf, technologyRows } from "../src/technologies.ts";
 import { clip, plain } from "../src/text.ts";
 
 describe("where", () => {
@@ -414,5 +415,40 @@ describe("language check", () => {
     expect(languageExcerpt([...listed, "We offer:"].join("\n"))).toBe(
       [...opening, "Nice to have:", "…", "Kubernetes", "German language skills"].join("\n"),
     );
+  });
+});
+
+describe("technologiesOf", () => {
+  const of = (text: string, title = "Engineer") => technologiesOf(title, text);
+  it("reads names that are also words only where a list would put them", () => {
+    expect(of("using Go, Python, Rust, or similar")).toEqual(["python", "go", "rust"]);
+    expect(of("Production applications with Golang")).toEqual(["go"]);
+    expect(of("", "Senior Go Engineer")).toEqual(["go"]);
+    expect(of("Own our go-to-market. Let's go! Go beyond.")).toEqual([]);
+    expect(of("Python and/or R; working knowledge of SQL")).toEqual(["python", "r", "sql"]);
+    expect(of("Python & R.")).toEqual(["python", "r"]);
+    expect(of("Our R&D team, R & D")).toEqual([]);
+    expect(of("Spark, Kafka and Flink")).toEqual(["kafka", "spark", "flink"]);
+    expect(of("backed by Spark Capital; agents like Gemini Spark")).toEqual([]);
+    expect(of("game engines such as Unity/Unreal")).toEqual(["unity", "unreal"]);
+    expect(of("Delta Lake, Unity Catalog and Azure")).toEqual(["azure"]);
+  });
+  it("tells C, C++, C#, Objective-C and .NET apart", () => {
+    expect(of("Experience with C/C++ and C#")).toEqual(["c", "cpp", "csharp"]);
+    expect(of("Modern C++17, talk to the C-level, after our Series C")).toEqual(["cpp"]);
+    expect(of("Swift and Objective-C")).toEqual(["swift", "objective-c"]);
+    expect(of("ASP.NET Core and .NET 8")).toEqual(["dotnet"]);
+    expect(of("write to jobs@example.net")).toEqual([]);
+  });
+  it("keeps Java and JavaScript apart, and needs the right case where a name is a word", () => {
+    expect(of("JavaScript and TypeScript")).toEqual(["javascript", "typescript"]);
+    expect(of("Java/Kotlin")).toEqual(["java", "kotlin"]);
+    expect(of("React-based UI, React Native app")).toEqual(["react", "react-native"]);
+    expect(of("react quickly; rust on the hull; a swift reply")).toEqual([]);
+  });
+  it("lists each technology's search names in lower case, once per key", () => {
+    const go = technologyRows().find((r) => r.key === "go");
+    expect(go?.search).toEqual(expect.arrayContaining(["go", "golang"]));
+    expect(new Set(technologyRows().map((r) => r.key)).size).toBe(technologyRows().length);
   });
 });
