@@ -59,7 +59,7 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
         c.name, c.slug, c.ats, c.eu,
         (select count(*)::int from posting o where o.company_id = p.company_id and o.closed_at is null
           and o.id <> p.id) as others,
-        a.visa, a.can_in, a.visa_quote, mentions_visa(p.description) and a.read_at is null as visa_unread, a.read_at,
+        a.visa, a.can_in, a.visa_quote, p.mentions and a.read_at is null as visa_unread, a.read_at,
         a.relocation, a.relocation_quote, a.languages, a.language_quote, a.written_in, a.languages_read_at,
         a.uk_verdict, a.uk_entry, a.nl_verdict, a.nl_entry
       from posting p join company c on c.id = p.company_id join role_answer a on a.posting_id = p.id

@@ -68,4 +68,10 @@ insert into register_review (company_id, register, verdict, entry_name, evidence
   (2, 'uk_worker', 'listed', 'NORTHWIND LABS LTD', 'Made up for the tests.', 'agent'),
   (3, 'nl_ind', 'not_listed', null, 'Made up for the tests.', 'agent');
 
+-- The pipeline's runs, for the status page: everything on time, discovery not recorded yet.
+insert into run (kind, started_at, finished_at, stats) values
+  ('ingest', now() - interval '2 hours 10 minutes', now() - interval '2 hours', '{"boards": 4, "ok": 4, "failed": 0}'),
+  ('registers', now() - interval '5 hours', now() - interval '5 hours', '{"nl_ind": 0, "uk_worker": 1}'),
+  ('extract', now() - interval '10 hours', now() - interval '10 hours', '{"postings": 3}');
+
 select setval('company_id_seq', 100), setval('posting_id_seq', 100);

@@ -32,7 +32,12 @@ export default defineNuxtConfig({
   },
   // The data changes every 6 hours at most: answers are kept for 5 minutes per URL (served stale while one
   // request refreshes them), in a bounded cache so many different searches can't fill the memory.
-  $production: { routeRules: { "/api/**": { cache: { maxAge: 300, swr: true } } } },
+  $production: {
+    routeRules: {
+      "/api/**": { cache: { maxAge: 300, swr: true } },
+      "/api/status": { cache: { maxAge: 60, swr: true } },
+    },
+  },
   nitro: { storage: { cache: { driver: "lru-cache", max: 2000, maxSize: 64 * 1024 * 1024 } } },
   // Unit and browser tests run in Node, next to the config.
   typescript: {

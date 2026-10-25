@@ -15,6 +15,7 @@ useHead({
       Skip to content
     </a>
     <SiteHeader />
+    <StaleNotice />
     <NuxtPage />
     <SiteFooter />
   </div>
