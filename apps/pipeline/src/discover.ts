@@ -69,53 +69,60 @@ export async function discoverCommonCrawl(crawls = 2) {
   // Recorded like the other jobs, for the status page.
   const runId = await startRun("discover");
   let added = 0;
-  // Boards are saved after every crawl, so a later failure can't lose what was found.
-  for (const { id } of list.slice(0, crawls)) {
-    let files: string;
-    try {
-      const paths = await withRetry(() =>
-        con.runAndReadAll(
-          `select path from read_csv('https://data.commoncrawl.org/crawl-data/${id}/cc-index-table.paths.gz',
-             header = false, columns = {'path': 'VARCHAR'}) where path like '%/subset=warc/%'`,
-        ),
-      );
-      files = paths
-        .getRowObjectsJson()
-        .map((r) => `'https://data.commoncrawl.org/${str(r.path)}'`)
-        .join(", ");
-    } catch (e) {
-      failed.push(`${id}: ${errorText(e)}`);
-      continue;
-    }
-    for (const source of SOURCES) {
-      const [from, to] = surtRange(source.host);
-      const before = found.size;
+  try {
+    // Boards are saved after every crawl, so a later failure can't lose what was found.
+    for (const { id } of list.slice(0, crawls)) {
+      let files: string;
       try {
-        const rows = await withRetry(() =>
+        const paths = await withRetry(() =>
           con.runAndReadAll(
-            `select distinct url_host_name as host, split_part(url_path, '/', 2) as seg
-             from read_parquet([${files}]) where url_surtkey >= '${from}' and url_surtkey < '${to}'`,
+            `select path from read_csv('https://data.commoncrawl.org/crawl-data/${id}/cc-index-table.paths.gz',
+               header = false, columns = {'path': 'VARCHAR'}) where path like '%/subset=warc/%'`,
           ),
         );
-        for (const r of rows.getRowObjectsJson()) {
-          let f: Found | null = null;
-          try {
-            f = source.read(new URL(`https://${str(r.host)}/${str(r.seg)}`));
-          } catch {
-            // a host or path that doesn't make a URL isn't a board
-          }
-          if (f) found.set(`${f.ats}|${f.slug.toLowerCase()}|${String(f.eu)}`, f);
-        }
-        console.log(`${id} ${source.host}: +${found.size - before} slugs`);
+        files = paths
+          .getRowObjectsJson()
+          .map((r) => `'https://data.commoncrawl.org/${str(r.path)}'`)
+          .join(", ");
       } catch (e) {
-        failed.push(`${id} ${source.host}: ${errorText(e)}`);
+        failed.push(`${id}: ${errorText(e)}`);
+        continue;
       }
+      for (const source of SOURCES) {
+        const [from, to] = surtRange(source.host);
+        const before = found.size;
+        try {
+          const rows = await withRetry(() =>
+            con.runAndReadAll(
+              `select distinct url_host_name as host, split_part(url_path, '/', 2) as seg
+               from read_parquet([${files}]) where url_surtkey >= '${from}' and url_surtkey < '${to}'`,
+            ),
+          );
+          for (const r of rows.getRowObjectsJson()) {
+            let f: Found | null = null;
+            try {
+              f = source.read(new URL(`https://${str(r.host)}/${str(r.seg)}`));
+            } catch {
+              // a host or path that doesn't make a URL isn't a board
+            }
+            if (f) found.set(`${f.ats}|${f.slug.toLowerCase()}|${String(f.eu)}`, f);
+          }
+          console.log(`${id} ${source.host}: +${found.size - before} slugs`);
+        } catch (e) {
+          failed.push(`${id} ${source.host}: ${errorText(e)}`);
+        }
+      }
+      const now = await addBoards([...found.values()], "commoncrawl");
+      added += now;
+      console.log(`${id}: ${found.size} slugs so far, ${now} new boards`);
     }
-    const now = await addBoards([...found.values()], "commoncrawl");
-    added += now;
-    console.log(`${id}: ${found.size} slugs so far, ${now} new boards`);
+  } catch (e) {
+    // A failure outside the per-crawl retries (the database, DuckDB): the run is recorded as failed, not left open.
+    await finishRun(runId, { slugs: found.size, added, failed: failed.length, error: 1 });
+    throw e;
+  } finally {
+    con.closeSync();
   }
-  con.closeSync();
   await finishRun(runId, { slugs: found.size, added, failed: failed.length });
   if (failed.length) throw new Error(`common crawl, failed:\n  ${failed.join("\n  ")}`);
 }
