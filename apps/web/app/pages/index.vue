@@ -17,6 +17,7 @@ const { text: searchText, submit: searchNow, clear: clearSearch } = useSearchBox
 const { data, status, error, refresh } = await useFetch("/api/roles", { query: computed(() => route.query) });
 
 const n = (x: number | undefined) => (x ?? 0).toLocaleString("en-US");
+const roles = (x: number | undefined) => `${n(x)} ${x === 1 ? "role" : "roles"}`;
 const visaLevel = computed(() => param("visa") || "open");
 const visaLabel = computed(() =>
   visaLevel.value === "open"
@@ -184,7 +185,7 @@ useSeoMeta({
               class="h-[52px] w-full cursor-pointer rounded-control bg-accent text-[15px] font-medium text-accent-ink"
               aria-live="polite"
             >
-              Show {{ n(data?.total) }} roles
+              Show {{ roles(data?.total) }}
             </DialogClose>
           </div>
         </DialogContent>
@@ -208,10 +209,10 @@ useSeoMeta({
       </aside>
 
       <section aria-labelledby="results-title" class="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
-        <p class="sr-only" aria-live="polite">{{ data ? `${n(data.total)} roles` : "" }}</p>
+        <p class="sr-only" aria-live="polite">{{ data ? roles(data.total) : "" }}</p>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 id="results-title" class="text-lg font-medium md:text-xl">
-            {{ data ? `${n(data.total)} roles` : "Roles" }}
+            {{ data ? roles(data.total) : "Roles" }}
           </h2>
           <div class="flex items-center gap-2.5 text-sm text-fg-2">
             <span class="hidden sm:inline">Sort</span>
@@ -222,7 +223,7 @@ useSeoMeta({
           v-if="data && visaLevel === 'open' && data.counts.visa.wont"
           class="-mt-2 flex flex-wrap items-center gap-x-2 text-xs text-fg-2"
         >
-          <span>Won't sponsor is hidden: {{ n(data.counts.visa.wont) }} roles.</span>
+          <span>Won't sponsor is hidden: {{ roles(data.counts.visa.wont) }}.</span>
           <button
             type="button"
             class="min-h-8 cursor-pointer text-accent underline"

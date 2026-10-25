@@ -6,6 +6,21 @@ export type VisaState = (typeof VISA_STATES)[number];
 export const RELOCATION_STATES = ["helps", "may", "no", "silent"] as const;
 export type RelocationState = (typeof RELOCATION_STATES)[number];
 
+// How each answer reads on a chip, a job page and a report.
+export const VISA_LABEL: Record<VisaState, string> = {
+  sponsors: "Sponsors visa",
+  may: "May sponsor",
+  can: "Can sponsor",
+  unknown: "Visa unknown",
+  wont: "Won't sponsor",
+};
+export const RELOCATION_LABEL: Record<RelocationState, string> = {
+  helps: "Helps you move",
+  may: "May help you move",
+  no: "No relocation",
+  silent: "Says nothing",
+};
+
 // The visa filter's levels, strongest first. The default hides only "Won't sponsor".
 export const VISA_LEVELS = [
   { key: "sponsors", label: "Sponsors only", states: ["sponsors"] },
