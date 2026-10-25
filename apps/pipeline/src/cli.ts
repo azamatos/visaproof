@@ -8,6 +8,7 @@ import { extract } from "./extract.ts";
 import { digest } from "./digest.ts";
 import { checkLanguages } from "./languages.ts";
 import { readTechnologies } from "./technologies.ts";
+import { loadNames } from "./companies.ts";
 
 const HELP = `node src/cli.ts <command>
 
@@ -20,6 +21,7 @@ const HELP = `node src/cli.ts <command>
   match                   match companies to the registers again
   reviews <file.jsonl> [by]
                           load reviewed register statuses (checked against the registers first)
+  names <file.jsonl>      load reviewed company names for boards that don't send one (reviews/companies.jsonl)
   technologies            fill the technology table and read the postings an older dictionary read
   report                  print the numbers as Markdown
   digest [host.json]      print the summary of the last 24 hours as Telegram HTML (deploy/digest.sh sends it,
@@ -66,6 +68,12 @@ try {
       const file = args[0];
       if (!file) throw new Error("reviews needs a file: node src/cli.ts reviews <file.jsonl> [agent|owner]");
       await loadReviews(file, args[1]);
+      break;
+    }
+    case "names": {
+      const file = args[0];
+      if (!file) throw new Error("names needs a file: node src/cli.ts names reviews/companies.jsonl");
+      await loadNames(file);
       break;
     }
     case "technologies":
