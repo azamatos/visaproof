@@ -1,7 +1,7 @@
 # Product spec
 
-Updated 2026-10-23. The agreed behaviour for the MVP; "later" items are in `progress.md`. The pipeline is built,
-the site isn't.
+Updated 2026-10-25. The agreed behaviour for the MVP; "later" items are in `progress.md`. The pipeline and the
+site are built; the site is a preview until the public launch.
 
 ## Who uses it
 
@@ -46,39 +46,54 @@ Rule-based regex hits are never shown: they're wrong too often (`docs/findings.m
 
 ## Screens (MVP)
 
+All built (2026-10-25), from the owner's design, each with its loading, empty, error and not-found states.
+
 ### Search (`/`)
 
-- A search box (title, company, stack) and filters: country and city, role type, seniority, stack, verdict,
-  "no local language required", salary posted, work mode, posted within.
-- Each result: title, company, city and work mode, verdict badge, language badge, salary if posted, stack tags,
-  posted date.
+- A search box and filters: country, visa (five levels; the default hides "Won't sponsor"), relocation offered,
+  "no local language", role family, seniority, work mode, salary posted, posted within. Counts on every option.
+- The search matches a whole word in the title, a word start in the company's name, or a technology the posting
+  names, by any of its names ("golang", "k8s", "c++"). Not the posting's whole text: that was slow (about 1 s)
+  and loose ("go" found "go-to-market", "C++" found nothing).
+- Each result: title, company, place and work mode, the visa and relocation chips, the language, salary if
+  posted, and how long ago the board posted it (the board's date, not when we first saw it).
 - Filter state lives in the URL, so a search can be shared or bookmarked.
-- Sorted by newest first by default; "visa offered first" as an option.
-- Fast on a phone: server-rendered first page, small JavaScript, no layout shift.
+- Sorted strongest answer first by default; newest as an option.
+- With countries chosen, "Can sponsor" counts only where it holds (a UK sponsor is "Unknown" in Germany).
 
 ### Job (`/jobs/:id`)
 
-- The facts above, the **evidence block** (quotes and register entry, each with its source and date), and a big
-  "Apply on the company's site" link.
-- "Last checked" time; a closed banner when the role is gone from the company's board.
-- A "Report a wrong verdict" link (mailto or a simple form) to collect labelled mistakes.
+- The four answers on top (visa, moving, language, pay), "Apply on the company's site" (a new tab), and "Where the
+  answers come from": the posting's sentence, each country's check (UK or IND register, the Blue Card salary
+  minimum, "no register" elsewhere), relocation and languages, each with its source and date, and a next step
+  when the answer is Unknown. What isn't read yet says so.
+- "Last checked" time; a closed banner when the role is gone from the company's board; a real 404.
+- "Report a wrong answer": the visitor picks the answer and says what the posting says; the site writes it as an
+  email to the corrections address (`hi@azamatos.com`) in the visitor's own mail app. The site only reads the
+  database, so it stores nothing.
+- A board that posts for other companies says the employer, and the sponsor, may be someone else.
 
-### Company (`/companies/:slug`)
+### Company (`/companies/:ats/:slug`)
 
-- Open roles, register status per country (entity name as registered), link to the careers page.
+- Open roles strongest first, what its postings say about visas, its register checks per country, the Blue Card
+  count for its German roles, its board, and a correction or removal link.
 
 ### Country (`/countries/:code`)
 
-- Open roles there, plus a short, sourced explainer of the work-permit route for developers, with the date checked.
+- Germany, the Netherlands and the United Kingdom: the permit route with the official amounts, their sources and
+  the date checked (`visa_rule`), what each answer means there, the register check, the strongest roles.
+- Other countries: their roles, and "not researched yet" (owner, 2026-10-25: full pages for these three only).
 
 ### Method (`/method`)
 
-- Where the data comes from, how verdicts are made, the extractor's measured accuracy, known limits, the
-  not-legal-advice note, and how a company can ask to be removed or corrected.
+- How it works, the five answers with live counts, the measured accuracy (dated), what it can't do, not legal
+  advice, and how a company asks for a correction or removal.
 
 ### Status (`/status`)
 
-- Last ingest run, number of open roles, sources that failed.
+- Each part of the pipeline (job boards, open roles, registers, reading the postings, finding boards), when it last
+  ran and whether that's on time: job boards fresh under 7 hours, late to 13, stale after. Failed boards by what
+  they answered. Every page shows a notice when the job boards are stale.
 
 ## Visa rules by country
 

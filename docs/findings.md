@@ -213,6 +213,31 @@ have" lines as requirements, because the excerpt didn't carry their heading. v2 
 learn French" as not required. v2 was fixed on the same 200 postings it is scored on, so expect a little less on
 new ones; 23 of the 200 require a language.
 
+## What the site's data showed (2026-10-25)
+
+Measured on a copy of the server's database from 2026-10-24, 15,216 open roles.
+
+- **Dates.** Every open role was first seen in the pipeline's first week (it started 2026-10-22). By the boards'
+  own dates, 9,735 (64%) were posted more than 30 days before, and 473 more than two years before. "Posted
+  within", "Newest first" and the age on each card now use the board's date (15,119 roles have one).
+- **Search over the posting text was loose and slow.** A whole-word pattern never matches a name that starts or
+  ends with a symbol: "C++", "C#" and ".NET" found no posting text at all (plain matching finds 1,412, 808 and
+  666), while "go" found "go-to-market". About 1 s for a search, nine queries each scanning every text.
+- **Technologies, from a dictionary** (`src/technologies.ts`, 119 entries with aliases): Python 6,235 roles,
+  AWS 4,376, Kubernetes 3,675, Azure 2,860, SQL 2,674, Java 2,618, TypeScript 2,511, React 2,065, Go 1,671,
+  C++ 1,413. Names that are also words were checked on samples of about a dozen matches each: Go, C, R, Rust,
+  Swift, Ruby, Scala, Vue, Angular, Dart, Rails, Lua, Elixir, Flask, Tailwind, JAX, dbt, Helm, Jenkins, Jest,
+  Snowflake, Cassandra, Prometheus and Cypress were right in every sample. Spark and Unity needed list context
+  ("Spark Capital", Databricks' "Unity Catalog"); Unity is still wrong about 2 times in 6 (a company value, and
+  the C test framework of the same name). Reading every posting takes 7 seconds; search takes about 0.1 s.
+- **"Can sponsor" is per country.** 58 roles in Germany and the UK showed "Can sponsor" for Germany because the
+  employer is on the UK register. The view now records where it holds (`can_in`).
+- **Company names.** 4,103 open roles (27%) sat under a slug, at 765 boards that don't send a name (Ashby 635,
+  Personio 102, Lever 28). Agents named the 200 biggest with evidence (`reviews/companies.jsonl`): 1,119 roles are
+  left under a slug. Six of those boards post roles for other companies (recruiters, a fund's portfolio board).
+- **Places.** 712 open roles in two countries read "London, Germany or United Kingdom"; each city now goes with
+  its own country.
+
 ## What changes in the plan
 
 - **M1 started with the labelled set**, before any extractor code; the regex numbers above are its baseline.

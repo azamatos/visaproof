@@ -1,10 +1,11 @@
 # Visaproof
 
-Visa-friendly developer jobs in Europe, with the evidence for every answer. Coming to
+Visa-friendly developer jobs in Europe, with the evidence for every answer:
 [visaproof.azamatos.com](https://visaproof.azamatos.com).
 
-> **Status: in development.** The data pipeline runs every 6 hours; the website isn't built yet. The repo keeps
-> its working name, `sponsored`.
+> **Status: preview.** The data pipeline runs every 6 hours and the site is up as a preview (not indexed yet):
+> search, job pages with the evidence, company and country pages, method and status. The public launch follows.
+> The repo keeps its working name, `sponsored`.
 
 A free job finder for software developers who need a visa to work in Europe. It reads open roles straight from
 companies' own job boards and answers the questions a relocating developer asks first, with proof:
@@ -32,14 +33,18 @@ Personio, Recruitee, Workable, Workday)                            (finds new bo
             Postgres  ◀───────────  sponsor registers (Dutch IND, UK Home Office)
                 │
                 ▼
-     website (planned): search, filters, job pages with the evidence, method and accuracy
+     website (Nuxt): search, filters, job pages with the evidence, company and country pages, method, status
 ```
 
 1. A board is read in one request where its API allows it; a few boards need one more request per new role.
 2. Only software engineering roles in the EU, EEA, UK and Switzerland are kept.
 3. Employers are matched against the official registers.
-4. A language model reads each new or changed posting and returns structured facts with verified quotes
-   (planned). A hand-labelled test set measures how often it's right, and the numbers are published.
+4. A language model (Claude Opus 5.5) reads each new or changed posting that mentions visas, permits or relocation
+   and returns the facts with quotes; a quote that isn't word for word in the posting is dropped. A second pass
+   (Claude Sonnet 5.5) checks every posting for the languages it requires. A hand-labelled set of 200 postings
+   measures both, and the numbers are on the site's Method page.
+5. Each posting's technologies are recognised from a dictionary with aliases (Go = Golang, k8s = Kubernetes), so
+   search finds "C++" and ".NET" and never mixes up Java and JavaScript.
 
 What the first runs found is in [docs/findings.md](docs/findings.md).
 
@@ -51,7 +56,7 @@ What the first runs found is in [docs/findings.md](docs/findings.md).
 
 ## Run it
 
-Needs Node 22.18+, pnpm 10 and a Postgres database.
+Needs Node 22.18+, pnpm 10 and a Postgres database (18 on the server).
 
 ```sh
 pnpm install
@@ -61,8 +66,14 @@ node src/cli.ts migrate
 node src/cli.ts seed boards.json          # [{ "ats": "greenhouse", "slug": "example" }, …]
 node src/cli.ts ingest                    # read the boards
 node src/cli.ts registers                 # load the IND and UK registers, match companies
+node src/cli.ts technologies              # recognise each posting's technologies
 node src/cli.ts report                    # the numbers, as Markdown
+cd ../web
+NUXT_DATABASE_URL=$DATABASE_URL pnpm dev  # the site on http://localhost:4003
 ```
+
+Checks, as CI runs them: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test`, and the browser tests
+(Playwright and axe, against a test database of made-up roles): `pnpm --filter web e2e`.
 
 The server setup (Docker Compose, timers, deploy) is in [deploy/README.md](deploy/README.md).
 

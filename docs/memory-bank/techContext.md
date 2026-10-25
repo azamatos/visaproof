@@ -1,7 +1,8 @@
 # Technical plan
 
-**Updated 2026-10-23.** Built: the pipeline (ingest, registers, discovery, alerts) on the server. Planned:
-extraction, evaluation, the website.
+**Updated 2026-10-25.** Built: the pipeline (ingest, registers, discovery, extraction, language check,
+technologies, alerts) on the server, and the site (search, job, company and country pages, method, status), live
+as a `noindex` preview. Planned: what `progress.md` lists after the MVP.
 
 ## Shape
 
@@ -9,65 +10,85 @@ extraction, evaluation, the website.
 company job boards ──┐            Common Crawl index ──┐ weekly
                      ▼                                 ▼
    pipeline (apps/pipeline), Docker on the server, systemd timers
-     ingest every 6 h: read due boards → engineering roles in Europe → new / changed / closed → rule signals
-     registers daily:  IND + UK registers → match companies
+     ingest every 6 h: read due boards → engineering roles in Europe → new / changed / closed → technologies
+     registers daily:  IND + UK registers → automatic candidates; reviewed entries decide
      discover weekly:  Common Crawl → new boards (read once, kept if they have roles for us)
-     extract (planned): new or changed postings → language model → facts with verified quotes
+     extract nightly:  postings that mention visas → Claude Opus 5.5 → facts with verified quotes;
+                       every posting → Claude Sonnet 5.5 → languages it requires
                      ▼
-              Postgres 18 (same server, no public port)
+              Postgres 18 (same server, no public port) → role_answer view: one answer per role
                      ▼
-   website (planned, apps/web): search, filters, job / company / country pages, method, status
+   website (apps/web, Nuxt): search, job, company and country pages, method, status; reads as a read-only user
 ```
 
 The pipeline and the site share only the database, so either can be rebuilt without touching the other.
 
 ## Decisions taken (reversible, with the reason)
 
-| Decision                                                                                           | Why                                                                                                      | Instead of                                                                                           |
-| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Pipeline and Postgres on the owner's server (Docker, systemd timers, `Persistent=true`)            | No time limits, no laptop sleep, no cold database; runs every 6 h for free. A missed run starts at boot. | GitHub Actions cron + Neon (scheduled runs get delayed and switch off after 60 days without commits) |
-| Node runs the TypeScript directly (type stripping)                                                 | No build step for a CLI; `tsc` only type-checks                                                          | A bundler                                                                                            |
-| Plain SQL migrations + the `postgres` client                                                       | Bulk upserts and a small schema; nothing an ORM adds yet                                                 | Drizzle (still fine for the site later)                                                              |
-| Read each board in one request where possible (Greenhouse `content=true`, Workable `details=true`) | ~10× fewer requests than one per job                                                                     | Per-job detail calls                                                                                 |
-| Common Crawl for discovery                                                                         | Finds the boards nobody listed by hand, using public data, one request per board to check                | A hand-kept company list only                                                                        |
-| Keep only engineering roles in scope countries; keep their full text privately                     | Small database, and the text is needed for extraction and evaluation                                     | Storing every posting                                                                                |
-| Visa sponsorship and relocation support are two separate facts                                     | Most "relocation package" postings say nothing about visas (`docs/findings.md`)                          | One "visa" verdict                                                                                   |
-| Auto register matches are candidates, not answers                                                  | Name matching links "Wise" to "Wise K9 Ltd" (`docs/findings.md`)                                         | Showing name matches                                                                                 |
+| Decision                                                                                           | Why                                                                                                             | Instead of                                                                                           |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Pipeline and Postgres on the owner's server (Docker, systemd timers, `Persistent=true`)            | No time limits, no laptop sleep, no cold database; runs every 6 h for free. A missed run starts at boot.        | GitHub Actions cron + Neon (scheduled runs get delayed and switch off after 60 days without commits) |
+| Node runs the TypeScript directly (type stripping)                                                 | No build step for a CLI; `tsc` only type-checks                                                                 | A bundler                                                                                            |
+| Plain SQL migrations + the `postgres` client                                                       | Bulk upserts and a small schema; nothing an ORM adds yet                                                        | Drizzle (still fine for the site later)                                                              |
+| Read each board in one request where possible (Greenhouse `content=true`, Workable `details=true`) | ~10× fewer requests than one per job                                                                            | Per-job detail calls                                                                                 |
+| Common Crawl for discovery                                                                         | Finds the boards nobody listed by hand, using public data, one request per board to check                       | A hand-kept company list only                                                                        |
+| Keep only engineering roles in scope countries; keep their full text privately                     | Small database, and the text is needed for extraction and evaluation                                            | Storing every posting                                                                                |
+| Visa sponsorship and relocation support are two separate facts                                     | Most "relocation package" postings say nothing about visas (`docs/findings.md`)                                 | One "visa" verdict                                                                                   |
+| Auto register matches are candidates, not answers                                                  | Name matching links "Wise" to "Wise K9 Ltd" (`docs/findings.md`)                                                | Showing name matches                                                                                 |
+| `role_answer` stays a view, not a table refreshed by the pipeline                                  | Measured 2026-10-25: about 46 ms a query; the slow part of search was the regex over the posting text, now gone | A materialised table and a refresh after every job                                                   |
+| Search by title word, company name and a technology dictionary, not the posting's text             | 0.1 s instead of about 1 s for a whole search, and precise ("C++" and ".NET" found no text before)              | Full-text or regex search over descriptions                                                          |
+| API answers cached 5 minutes per URL (status 60 s) in a bounded LRU, in production only            | The data changes every 6 hours at most; a bounded cache can't be filled by many different searches              | No cache, or Cloudflare cache rules (a DNS-side change)                                              |
+| "Report a wrong answer" is an email from the visitor's mail app to the corrections address         | The site's database user only reads; no form endpoint, no mail service, no stored personal data                 | A form that writes to the database                                                                   |
+| Visa mentions kept per posting as a generated column (`posting.mentions`)                          | Counting them ran the pattern over every text (3.3 s); now 0.09 s                                               | The pattern at query time                                                                            |
 
 ## Packages
 
-| Path                          | Job                                                                                                                                                     |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/pipeline/src/adapters/` | One file per board type, all returning `RawPosting`. Boards without texts in the list (SmartRecruiters, Workday) fetch a job's text only when it's new. |
-| `src/location.ts`             | Free-text location → countries, on-site / hybrid / remote and remote scope. Remote with no region is dropped (on a US board it means the US).           |
-| `src/roles.ts`                | Title → role family (frontend … management) or not software; seniority.                                                                                 |
-| `src/signals.ts`              | Regex visa / no-visa / language hits with context, salary ranges. Baseline and pre-filter only.                                                         |
-| `src/ingest.ts`               | Which boards are due, upsert, close what disappeared. A board that suddenly lists nothing keeps its roles open and records a warning.                   |
-| `src/registers.ts`            | IND HTML table and UK CSV → `register_entry`; automatic matching.                                                                                       |
-| `src/discover.ts`             | Seed lists and Common Crawl → `company` rows with status `new`.                                                                                         |
-| `src/report.ts`               | The numbers in `docs/findings.md`.                                                                                                                      |
-| `apps/web`                    | _Planned._ The site.                                                                                                                                    |
-| `eval/`                       | _Planned._ Labelled postings and the scorer.                                                                                                            |
+| Path                             | Job                                                                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/pipeline/src/adapters/`    | One file per board type, all returning `RawPosting`. Boards without texts in the list (SmartRecruiters, Workday) fetch a job's text only when it's new. |
+| `src/location.ts`                | Free-text location → countries, on-site / hybrid / remote and remote scope. Remote with no region is dropped (on a US board it means the US).           |
+| `src/roles.ts`                   | Title → role family (frontend … management) or not software; seniority.                                                                                 |
+| `src/signals.ts`                 | Regex visa / no-visa / language hits, salary ranges, and `MENTIONS_RE`, the extractor's pre-filter. Baseline and pre-filter only.                       |
+| `src/technologies.ts`            | The technology dictionary (119 entries with aliases) and its matcher; `cli.ts technologies` reads postings an older dictionary read.                    |
+| `src/ingest.ts`                  | Which boards are due, upsert (with technologies), close what disappeared. A board that suddenly lists nothing keeps its roles open.                     |
+| `src/registers.ts`               | IND HTML table and UK CSV → `register_entry`; automatic candidates; reviewed statuses (`reviews/registers.jsonl`).                                      |
+| `src/companies.ts`               | Reviewed names for boards that don't send one, and boards that post for others (`reviews/companies.jsonl`).                                             |
+| `src/discover.ts`                | Seed lists and Common Crawl → `company` rows with status `new`.                                                                                         |
+| `src/extract.ts`                 | Visa and relocation facts through Claude Code in print mode, quotes verified.                                                                           |
+| `src/languages.ts`               | Languages each role requires, for every open posting.                                                                                                   |
+| `src/evaluation.ts`, `eval/`     | The 200 labelled postings, the sampler and the scorer.                                                                                                  |
+| `src/digest.ts`, `src/report.ts` | The daily Telegram summary; the numbers in `docs/findings.md`.                                                                                          |
+| `apps/web/server/api/`           | `roles` (search), `jobs/[id]`, `companies/[ats]/[...slug]`, `countries/[code]`, `stats`, `status`.                                                      |
+| `apps/web/shared/`               | What both sides use: answer states and labels, evidence rules (`evidence.ts`), status rules (`status.ts`), country guides (`guides.ts`), formats.       |
+| `apps/web/app/`                  | Pages, components (`ui/` are the reusable ones), composables.                                                                                           |
+| `apps/web/e2e/`                  | Browser tests and the made-up test data (`seed.sql`).                                                                                                   |
 
 Board status: `new` → read once → `active` (has roles for us; read every run), `idle` (works, nothing for us;
 re-read weekly), `gone` (404; re-read monthly).
 
-## Data model (as built, `migrations/001_init.sql`)
+## Data model (as built, `apps/pipeline/migrations/`)
 
 ```
-company          id, ats, slug, eu, name, origin (seed | commoncrawl), status, checked_at, ok_at, error,
-                 errors_in_row, total_jobs, kept_jobs                         unique (ats, slug, eu)
-posting          id, company_id, external_id, url, title, family, seniority, location_raw, countries[],
-                 work_mode, remote_scope, posted_at, first_seen_at, last_seen_at, changed_at, closed_at,
-                 content_hash, description (private), salary_raw, pay, signals      unique (company_id, external_id)
-register_entry   register (nl_ind | uk_worker), name, core (name without legal suffixes), extra (KvK; town, rating)
-company_register company_id, register, entry_name, method (auto | override)
-run              id, kind, started_at, finished_at, stats
-source_result    run_id, company_id, ok, ms, total, kept, error
+company           id, ats, slug, eu, name, origin, status, checked_at, ok_at, error, errors_in_row, total_jobs,
+                  kept_jobs, posts_for_others                                     unique (ats, slug, eu)
+posting           id, company_id, external_id, url, title, family, seniority, location_raw, countries[], work_mode,
+                  remote_scope, posted_at, first_seen_at, last_seen_at, changed_at, closed_at, content_hash,
+                  description (private), salary_raw, pay, signals, technologies[], technologies_version,
+                  mentions (generated)                                            unique (company_id, external_id)
+register_entry    register (nl_ind | uk_worker), name, core, extra, fetched_at
+company_register  automatic candidates (method auto | override)
+register_review   company_id, register, verdict (listed | not_listed | unsure), entry_name, evidence, reviewed_by
+extraction        posting_id, content_hash, prompt_version, requested, model, visa, visa_quote, relocation,
+                  relocation_quote, languages, dropped         one row per posting text, prompt and model
+extraction_call   tokens, time and API-equivalent cost per call
+language_check    posting_id, content_hash, prompt_version, requested, model, languages, quote, written_in
+visa_rule         country, rule, amount, currency, period, applies_from, source_url, checked_on
+technology        key, label, search[] (every name, lower case)
+run, source_result  every job's runs; each board's result per ingest
+role_answer       (view) one answer per role: visa state and rank, can_in (countries where "Can sponsor" holds),
+                  quotes, register verdicts, relocation, languages
+mentions_visa()   (function) MENTIONS_RE in SQL; a test keeps the two the same
 ```
-
-Planned: `extraction` (posting_id, prompt_version, model, data jsonb, created_at) and `paragraph` (hash → extracted
-facts, so company-wide boilerplate is read once), `label` for the evaluation set.
 
 ## Sources (checked 2026-10-17, confirmed working from the server 2026-10-22)
 
@@ -95,51 +116,36 @@ check before adding).
 
 A register load that shrinks by more than 20% is rejected and the old copy kept.
 
-## Register matching (the hard part, planned v2)
+## Register matching
 
-Automatic name matching is only a candidate list. A match becomes an answer when one of these holds:
+Automatic name matching is only a candidate list ("Wise" matches 20 UK entries). A company counts as on a
+register only through `register_review`: an agent or the owner names the entry with evidence (its legal name in
+the postings or on its site, a company registry number), and the entry must still be on the register, which
+reloads daily. The first round covers the 100 biggest employers in each of the Netherlands and the UK
+(2026-10-24). Everyone else is "not checked yet".
 
-1. **The posting names the entity.** Many postings end with the legal employer ("Adyen N.V.", "Wise Payments
-   Limited"); search the stored texts for the register names of the candidates.
-2. **KvK / company number** found on the company's site or posting (NL).
-3. **Manual override**, reviewed in a small table, for the companies with the most NL and UK roles first.
+## Extraction
 
-Until then the site says "register: not checked yet" rather than guessing.
+1. **Pre-filter:** only postings that mention visas, relocation, permits or the right to work (`MENTIONS_RE`,
+   about 22%) are read for visas; the rest are silent by construction. The excerpt is the matching lines with
+   their neighbours.
+2. **Visa and relocation:** Claude Opus 5.5 through Claude Code in print mode on the owner's subscription (no API
+   billing), 20 postings a call, a JSON schema: `visa` and `relocation` as offers / maybe / refuses / silent, each
+   with one verbatim quote. A quote not found in the posting (allowing for whitespace and quote marks) is dropped
+   with its fact. Prompt `prompts/extract-v1.md`.
+3. **Languages:** a second pass with Claude Sonnet 5.5 for every open posting; postings with no line about
+   languages, written in English, are stored without a call. Prompt `prompts/languages-v2.md`.
+4. Both run nightly at 01:00 UTC and stop at the first usage-limit error. Extractions count for the posting's
+   current text and the prompt in use: a new prompt means a new version of `role_answer`.
 
-## Extraction (planned)
+## Evaluation
 
-1. **Pre-filter:** keep the title, location and only the sentences that mention visas, relocation, permits,
-   languages, salary, remote or seniority, plus the first lines. Most postings shrink to a few hundred tokens.
-   Postings with no visa, relocation, permit or right-to-work words at all (~79%) skip the visa and relocation
-   verdict: it's "silent" without a model call.
-2. **Boilerplate once** (_planned_, if usage grows): hash each paragraph; a paragraph seen at the same company
-   before reuses its facts. Most visa and relocation sentences are company-wide boilerplate (`docs/findings.md`).
-3. **Language model** with structured output (a JSON schema):
-   - `visa`: `offers | maybe | refuses | silent` + one verbatim quote
-   - `relocation`: `offers | maybe | refuses | silent` + quote
-   - `languages[]`: required languages other than English
-   - _Planned_: `seniority`, `stack[]`, `workMode`, `remoteRegion`, `salary`, and languages for postings without
-     visa words (a second, lighter pass)
-4. **Quotes are verified:** a quote that isn't in the posting (allowing for whitespace and quote marks) is
-   dropped with its fact, which is then stored as silent.
-5. **Built (2026-10-23):** `src/extract.ts`, prompt `prompts/extract-v1.md`; tables `extraction` (one row per
-   posting text, prompt version and model) and `extraction_call` (tokens, time, API-equivalent cost per call).
-   20 postings per call, 2 calls at a time, nightly; it stops at the first usage-limit error.
-6. **Model:** Opus 5.5 through Claude Code in print mode on the owner's subscription (no API billing), chosen on
-   the labelled set (`docs/findings.md`). One `extract()` function, so the model or the way it's called can
-   change.
+- `eval/labels.jsonl`: 200 postings in four strata, labelled field by field with the evidence sentence.
+- `cli.ts eval-score` and `eval-languages`: precision and recall per answer, weighted by stratum; rules vs. model.
+- Bar: precision ≥ 95% for `visa = offers` before a prompt or model change ships. Results in `docs/findings.md`
+  and on `/method`.
 
-## Evaluation (planned)
-
-- `eval/postings/`: 200 postings sampled across countries, boards and rule outcomes (yes, no, silent, the known
-  false positives), labelled field by field. The owner reviews every "offers" and "refuses" label.
-- `eval/score.ts`: per-field accuracy; precision and recall for `visa = offers` and `relocation = offers` (a false
-  "yes" sends someone to apply where they can't get a permit, so precision matters most); rules vs. model side by
-  side.
-- Bar: precision ≥ 95% for `visa = offers` before the site shows verdicts.
-- Runs before any prompt or model change; numbers go in the README and on `/method`.
-
-## Website (planned)
+## Website
 
 - **Framework:** Nuxt (Vue 3), chosen by the owner on 2026-10-23 as a new skill with demand: Vue is asked for in
   18% of frontend and 14% of full-stack roles in our own postings (React 72%, Angular 29%, Next.js 17%, Astro 1%),
@@ -156,13 +162,17 @@ Until then the site says "register: not checked yet" rather than guessing.
     `<select>` (`UiSelect`, on Reka's Select, renders its choice on the server too); every link to another site is a
     `UiExternalLink`, which opens a new tab and says so (an arrow, and "(opens in a new tab)" for screen readers);
     links within the site are `NuxtLink` and stay in the tab (owner, 2026-10-24).
+- **Search:** a whole word in the title, a word start in the company's name, or a technology by any of its names
+  (`technology.search`); filters as SQL conditions, each facet counted with the other filters applied.
+- **Answers:** the pages read `role_answer`; the rules that turn it into words (evidence, status) are pure
+  functions in `shared/`, with unit tests.
+- **Caching:** API answers 5 minutes per URL (status 60 s), stale while one request refreshes, in a bounded LRU,
+  in production only.
 - **Learning notes:** `docs/learning/`, one short note per concept the first time it appears in the code (the
-  owner learns Nuxt and Vue from this codebase).
-- **Hosting:** on the same server in Docker behind its existing Caddy front door, with Cloudflare proxying the
-  domain (cache, TLS, DDoS); it reads the local Postgres directly (decided 2026-10-23).
-- Search: Postgres full-text search over title, company and stack, `pg_trgm` for company names, facet counts in SQL.
-- UI: from the owner's design (Claude Design). Keyboard and screen-reader friendly filters, WCAG 2.2 AA, axe in
-  CI. Cloudflare Web Analytics (no cookies).
+  owner learns Nuxt and Vue from this codebase). _Planned._
+- **Hosting:** on the same server in Docker behind its Caddy front door, Cloudflare proxying the domain; it reads
+  the local Postgres as a read-only user (decided 2026-10-23).
+- **Quality:** WCAG 2.2 AA (axe in the browser tests, dark and light), Lighthouse ≥ 95 on a phone.
 
 ## Ops
 
@@ -177,6 +187,9 @@ Until then the site says "register: not checked yet" rather than guessing.
 
 ## Tests
 
-- Vitest: rules (`test/rules.test.ts`); each adapter against a saved real response (`test/fixtures`, recorded
-  with `scripts/record-fixture.ts` from discovered boards); planned: register matching and the quote verifier.
-- Site (planned): Playwright + axe on search, filter, job page, apply link; keyboard only. Lighthouse CI ≥ 95.
+- Pipeline (Vitest): rules (`test/rules.test.ts`), including the technology matcher and the SQL pattern; each
+  adapter against a saved real response (`test/fixtures`).
+- Site (Vitest): formats, search patterns, evidence and status rules (`apps/web/test`).
+- Browser (Playwright + axe, `apps/web/e2e`): search, job, company, country, method, status and 404 pages on a phone
+  and a desktop, against a test database of made-up roles built by the pipeline's own migrations. CI runs them
+  against Postgres 18.
