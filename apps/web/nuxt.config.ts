@@ -34,11 +34,36 @@ export default defineNuxtConfig({
   // request refreshes them), in a bounded cache so many different searches can't fill the memory.
   $production: {
     routeRules: {
+      // What a page may load: only its own files, plus Cloudflare's privacy-friendly analytics. Nuxt's config
+      // script and the inlined styles need 'unsafe-inline'. Set here, not in Caddy, so the browser tests run
+      // under it.
+      "/**": {
+        headers: {
+          "content-security-policy": [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data:",
+            "font-src 'self'",
+            "connect-src 'self' https://cloudflareinsights.com",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "object-src 'none'",
+          ].join("; "),
+        },
+      },
       "/api/**": { cache: { maxAge: 300, swr: true } },
       "/api/status": { cache: { maxAge: 60, swr: true } },
     },
   },
-  nitro: { storage: { cache: { driver: "lru-cache", max: 2000, maxSize: 64 * 1024 * 1024 } } },
+  nitro: {
+    storage: { cache: { driver: "lru-cache", max: 2000, maxSize: 64 * 1024 * 1024 } },
+    // Brotli and gzip copies of the scripts and styles, served as they are
+    compressPublicAssets: true,
+  },
+  // The styles go in the page itself: no stylesheet request before the first paint (Lighthouse on a phone).
+  features: { inlineStyles: true },
   // Unit and browser tests run in Node, next to the config.
   typescript: {
     strict: true,

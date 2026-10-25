@@ -52,3 +52,29 @@ test("has no accessibility violations, dark and light", async ({ page }) => {
       ).toEqual([]);
     }
 });
+
+test("loads every page without errors in the console (the content security policy included)", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(`${page.url()}: ${m.text()}`);
+  });
+  page.on("pageerror", (e) => errors.push(`${page.url()}: ${e.message}`));
+  for (const path of [
+    "/",
+    "/jobs/1",
+    "/companies/greenhouse/northwind",
+    "/countries/de",
+    "/method",
+    "/status",
+  ]) {
+    await page.goto(path);
+    await page.waitForLoadState("networkidle");
+  }
+  // client-side navigation too
+  await page.goto("/?q=golang");
+  await page.getByRole("link", { name: "Senior Backend Engineer (Go)" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Senior Backend Engineer (Go)");
+  expect(errors).toEqual([]);
+});

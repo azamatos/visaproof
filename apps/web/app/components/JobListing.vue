@@ -39,9 +39,8 @@ const time = (iso: string) =>
           v-for="t in job.technologies"
           :key="t.key"
           :to="{ path: '/', query: { q: t.label } }"
-          :aria-label="`Search roles with ${t.label}`"
           class="inline-flex min-h-6 items-center rounded-full border border-line px-2.5 font-mono text-mono text-fg-2 no-underline hover:border-line-strong hover:text-fg"
-          >{{ t.label }}</NuxtLink
+          ><span class="sr-only">Search roles with </span>{{ t.label }}</NuxtLink
         >
       </dd>
     </div>
