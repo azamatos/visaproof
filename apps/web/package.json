@@ -10,7 +10,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
-    "test": "vitest run",
+    "test": "vitest run --dir test",
     "e2e": "nuxt build && playwright test"
   },
   "dependencies": {
