@@ -199,7 +199,9 @@ async function readBoard(c: Company) {
 
   await sql`
     update company set
-      name = coalesce(name, ${name}), checked_at = now(), ok_at = now(), error = null, errors_in_row = 0,
+      name = case when name is null or name_reviewed then coalesce(${name}, name) else name end,
+      name_reviewed = name_reviewed and ${name}::text is null,
+      checked_at = now(), ok_at = now(), error = null, errors_in_row = 0,
       total_jobs = ${total}, kept_jobs = ${counts.kept}, status = ${counts.kept ? "active" : "idle"}
     where id = ${c.id}`;
   return { total, kept: counts.kept, counts, warning: null };

@@ -19,7 +19,9 @@ the UK, by agents with web research: 142 listed, 40 not listed, 18 unsure.
 
 `companies.jsonl`: the public name of each company whose board doesn't send one (Ashby, Lever and most Personio
 boards), one line per board. Load it with `node src/cli.ts names reviews/companies.jsonl` (deploy.sh does, every
-deploy). A name only fills a gap: a board that sends its own name keeps it. Low-confidence names aren't loaded.
+deploy). A name only fills a gap: a board that sends its own name keeps it, and a board that starts sending one
+replaces the reviewed name. The file is the whole truth: a name changed here changes on the next load, and a line
+taken out (or made low-confidence) takes its name off. Low-confidence names aren't loaded.
 
 - `name`: the name the company uses for itself, in its own capitalisation ("N26", "loveholidays"), not a legal
   entity unless that's how it presents itself.
