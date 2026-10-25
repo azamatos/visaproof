@@ -10,7 +10,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "nuxt build && playwright test"
   },
   "dependencies": {
     "@nuxt/fonts": "^1.1.0",
