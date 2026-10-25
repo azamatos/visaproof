@@ -2,7 +2,7 @@
 // One role: the four answers on top, the way to apply, and what each answer rests on. No posting text: it isn't
 // ours to republish, and the link goes to the original.
 import { RELOCATION_LABEL, VISA_LABEL } from "#shared/answers";
-import { countryName } from "#shared/countries";
+import { countryName, inCountry } from "#shared/countries";
 import { day, evidence, languageList, type JobDetail } from "#shared/evidence";
 
 const route = useRoute();
@@ -34,7 +34,7 @@ const language = computed(() => {
 // "Can sponsor" in a role with several countries says where.
 const visaWhere = computed(() =>
   job.value?.visa === "can" && job.value.countries.length > 1
-    ? `in ${job.value.canIn.map(countryName).join(" and ")}`
+    ? `in ${job.value.canIn.map(inCountry).join(" and ")}`
     : "",
 );
 const permits = computed(() =>

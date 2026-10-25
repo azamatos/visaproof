@@ -18,8 +18,8 @@
   country pages (full permit guides for Germany, the Netherlands and the UK; "not researched yet" elsewhere),
   Method, Status with a stale-data notice on every page, a 404 page, a content security policy, API caching.
   The live preview at visaproof.azamatos.com still runs the search-only version from 2026-10-24.
-- **Tests:** pipeline unit tests (65), site unit tests (18), browser tests with Playwright and axe on a phone and a
-  desktop (51, against `e2e/seed.sql`); CI has a new `browser` job with Postgres 18, not run on GitHub yet.
+- **Tests:** pipeline unit tests (65), site unit tests (20), browser tests with Playwright and axe on a phone and a
+  desktop (51, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
 - **Lighthouse on a phone** (local build, HTML uncompressed): job page 96, search 92, accessibility 100 everywhere.
   The live preview scored 93 (old code: a 900 ms document). Re-measure after the deploy.
 - The repo is `azamatos/visaproof`, public. The folder and the server paths keep the working name `sponsored`.

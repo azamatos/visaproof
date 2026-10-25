@@ -8,7 +8,16 @@ const path = computed(() => {
   const slug = route.params.slug;
   return `/api/companies/${String(route.params.ats)}/${(Array.isArray(slug) ? slug : [slug]).map((s) => encodeURIComponent(String(s))).join("/")}`;
 });
-const { data: company, error, refresh } = await useFetch<CompanyDetail>(path, { lazy: import.meta.client });
+// 50 roles to a page: "?page=2" for the next 50.
+const page = computed(() => Math.max(1, Math.floor(Number(route.query.page)) || 1));
+const {
+  data: company,
+  error,
+  refresh,
+} = await useFetch<CompanyDetail>(path, {
+  query: { page },
+  lazy: import.meta.client,
+});
 const notFound = computed(() => error.value?.statusCode === 404);
 if (import.meta.server && notFound.value) {
   const event = useRequestEvent();
@@ -17,6 +26,13 @@ if (import.meta.server && notFound.value) {
 const items = computed(() => (company.value ? companyEvidence(company.value) : []));
 const email = useRuntimeConfig().public.correctionsEmail;
 const of = (x: number) => `${String(x)} of ${String(company.value?.open ?? 0)}`;
+const shown = computed(() => {
+  const c = company.value;
+  if (!c) return "";
+  const first = (c.page - 1) * c.perPage + 1;
+  return `Roles ${String(first)}–${String(first + c.roles.length - 1)} of ${String(c.open)}`;
+});
+const pageLink = (to: number) => ({ query: to > 1 ? { page: String(to) } : {}, hash: "#roles-title" });
 
 useSeoMeta({
   title: () => company.value?.name ?? (notFound.value ? "Company not found" : "Company"),
@@ -135,19 +151,33 @@ useSeoMeta({
 
           <section aria-labelledby="roles-title" class="flex flex-col gap-3">
             <h2 id="roles-title" class="text-xl font-medium">Open roles</h2>
-            <p v-if="!company.roles.length" class="text-[15px] text-fg-2">
+            <p v-if="!company.open" class="text-[15px] text-fg-2">
               No open roles for developers in Europe right now. We read the board every 6 hours.
             </p>
+            <p v-else-if="company.pages > 1" class="text-sm text-fg-2">{{ shown }}</p>
             <ol class="m-0 flex list-none flex-col gap-3 p-0">
               <li v-for="job in company.roles" :key="job.id"><JobCard :job="job" /></li>
             </ol>
-            <NuxtLink
-              v-if="company.open > company.roles.length"
-              :to="{ path: '/', query: { q: company.name, visa: 'all' } }"
-              class="inline-flex min-h-11 items-center self-start text-sm underline underline-offset-[3px]"
+            <nav
+              v-if="company.pages > 1"
+              :aria-label="`More roles at ${company.name}`"
+              class="flex flex-wrap gap-x-6"
             >
-              The other {{ company.open - company.roles.length }} roles, in search
-            </NuxtLink>
+              <NuxtLink
+                v-if="company.page > 1"
+                :to="pageLink(company.page - 1)"
+                class="inline-flex min-h-11 items-center text-sm underline underline-offset-[3px]"
+              >
+                Previous {{ company.perPage }} roles
+              </NuxtLink>
+              <NuxtLink
+                v-if="company.page < company.pages"
+                :to="pageLink(company.page + 1)"
+                class="inline-flex min-h-11 items-center text-sm underline underline-offset-[3px]"
+              >
+                Next {{ Math.min(company.perPage, company.open - company.page * company.perPage) }} roles
+              </NuxtLink>
+            </nav>
           </section>
         </div>
 

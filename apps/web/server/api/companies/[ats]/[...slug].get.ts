@@ -1,18 +1,26 @@
 import type { VisaState } from "#shared/answers";
 import { BOARD_NAMES, boardUrl } from "#shared/boards";
 import type { CompanyDetail } from "#shared/company";
+import { COUNTRIES } from "#shared/countries";
 import type { RegisterReview } from "#shared/evidence";
 import { companyName } from "#shared/format";
 
-// One company's board: its open roles strongest first, what its postings say about visas, and its register checks
-// for the countries it hires in. 404 when there's no such board.
+// One company's board: its open roles strongest first, 50 to a page, what its postings say about visas, and its
+// register checks for the countries it hires in. 404 when there's no such board.
 
 const LIST = 50;
 
 export default defineEventHandler(async (event): Promise<CompanyDetail> => {
   const ats = getRouterParam(event, "ats") ?? "";
-  const slug = decodeURIComponent(getRouterParam(event, "slug") ?? "");
+  let slug: string;
+  try {
+    slug = decodeURIComponent(getRouterParam(event, "slug") ?? "");
+  } catch {
+    throw createError({ statusCode: 404, statusMessage: "No such company" });
+  }
+  const page = Math.max(1, Math.floor(Number(getQuery(event).page)) || 1);
   const sql = db();
+  // Lever keeps an EU board and a US one under the same slug: the one with the open roles.
   const [c] = await sql<
     {
       id: number;
@@ -22,8 +30,9 @@ export default defineEventHandler(async (event): Promise<CompanyDetail> => {
       posts_for_others: boolean;
       ok_at: Date | null;
     }[]
-  >`select id, name, slug, eu, posts_for_others, ok_at from company where ats = ${ats} and slug = ${slug}
-    order by eu limit 1`;
+  >`select id, name, slug, eu, posts_for_others, ok_at from company c where ats = ${ats} and slug = ${slug}
+    order by (select count(*) from posting p where p.company_id = c.id and p.closed_at is null) desc, eu desc
+    limit 1`;
   if (!c) throw createError({ statusCode: 404, statusMessage: "No such company" });
 
   const from = sql`posting p join company c on c.id = p.company_id join role_answer a on a.posting_id = p.id`;
@@ -36,6 +45,7 @@ export default defineEventHandler(async (event): Promise<CompanyDetail> => {
         may: number;
         wont: number;
         unread: number;
+        no_text: number;
         de: number;
         clears: number;
       }[]
@@ -43,11 +53,13 @@ export default defineEventHandler(async (event): Promise<CompanyDetail> => {
       select count(*)::int as open, count(*) filter (where a.visa = 'sponsors')::int as sponsors,
         count(*) filter (where a.visa = 'may')::int as may, count(*) filter (where a.visa = 'wont')::int as wont,
         count(*) filter (where p.mentions and a.read_at is null)::int as unread,
+        count(*) filter (where p.description is null)::int as no_text,
         count(*) filter (where 'DE' = any(p.countries))::int as de,
         count(*) filter (where a.can_de)::int as clears
       from ${from} where ${open}`,
     sql<{ code: string; n: number }[]>`
-      select x.code, count(*)::int as n from ${from}, unnest(p.countries) as x(code) where ${open}
+      select x.code, count(*)::int as n from ${from}, unnest(p.countries) as x(code)
+      where ${open} and x.code in ${sql(Object.keys(COUNTRIES))}
       group by 1 order by 2 desc`,
     // One sentence to show for the company: a promise if any posting makes one, else a hedge, else a refusal.
     sql<{ quote: string; visa: VisaState }[]>`
@@ -72,7 +84,7 @@ export default defineEventHandler(async (event): Promise<CompanyDetail> => {
         and applies_from <= current_date order by applies_from desc limit 1`,
     sql<CardRow[]>`
       select ${cardColumns(sql)} from ${from} where ${open}
-      order by a.visa_rank, ${posted(sql)} desc, p.id desc limit ${LIST}`,
+      order by a.visa_rank, ${posted(sql)} desc, p.id desc limit ${LIST} offset ${(page - 1) * LIST}`,
   ]);
   const review = (register: string) => {
     const r = reviews.find((x) => x.register === register);
@@ -97,6 +109,7 @@ export default defineEventHandler(async (event): Promise<CompanyDetail> => {
       quoteState: quote?.visa ?? null,
     },
     unread: counts?.unread ?? 0,
+    noText: counts?.no_text ?? 0,
     registers: { GB: review("uk_worker"), NL: review("nl_ind") },
     registerLoaded: { GB: loaded?.gb?.toISOString() ?? null, NL: loaded?.nl?.toISOString() ?? null },
     blueCard: blue
@@ -108,5 +121,8 @@ export default defineEventHandler(async (event): Promise<CompanyDetail> => {
         }
       : null,
     roles: rows.map(toCard),
+    page,
+    pages: Math.max(1, Math.ceil((counts?.open ?? 0) / LIST)),
+    perPage: LIST,
   };
 });

@@ -70,7 +70,7 @@ re-read weekly), `gone` (404; re-read monthly).
 
 ```
 company           id, ats, slug, eu, name, origin, status, checked_at, ok_at, error, errors_in_row, total_jobs,
-                  kept_jobs, posts_for_others                                     unique (ats, slug, eu)
+                  kept_jobs, posts_for_others, name_reviewed                      unique (ats, slug, eu)
 posting           id, company_id, external_id, url, title, family, seniority, location_raw, countries[], work_mode,
                   remote_scope, posted_at, first_seen_at, last_seen_at, changed_at, closed_at, content_hash,
                   description (private), salary_raw, pay, signals, technologies[], technologies_version,
@@ -166,8 +166,8 @@ reloads daily. The first round covers the 100 biggest employers in each of the N
   (`technology.search`); filters as SQL conditions, each facet counted with the other filters applied.
 - **Answers:** the pages read `role_answer`; the rules that turn it into words (evidence, status) are pure
   functions in `shared/`, with unit tests.
-- **Caching:** API answers 5 minutes per URL (status 60 s), stale while one request refreshes, in a bounded LRU,
-  in production only.
+- **Caching:** API answers 5 minutes per URL (status 60 s) in a bounded LRU, in production only. No
+  stale-while-revalidate: Nitro would serve an entry of any age to the first visitor after a quiet spell.
 - **Learning notes:** `docs/learning/`, one short note per concept the first time it appears in the code (the
   owner learns Nuxt and Vue from this codebase). _Planned._
 - **Hosting:** on the same server in Docker behind its Caddy front door, Cloudflare proxying the domain; it reads

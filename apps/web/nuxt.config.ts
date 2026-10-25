@@ -30,8 +30,9 @@ export default defineNuxtConfig({
     // Where "Report a wrong answer" and removal requests go (NUXT_PUBLIC_CORRECTIONS_EMAIL)
     public: { correctionsEmail: "hi@azamatos.com" },
   },
-  // The data changes every 6 hours at most: answers are kept for 5 minutes per URL (served stale while one
-  // request refreshes them), in a bounded cache so many different searches can't fill the memory.
+  // The data changes every 6 hours at most: answers are kept for 5 minutes per URL, in a bounded cache so many
+  // different searches can't fill the memory. No stale-while-revalidate: Nitro would serve an entry of any age to
+  // the first visitor after a quiet spell, hiding the stale-data notice exactly when it's needed.
   $production: {
     routeRules: {
       // What a page may load: only its own files, plus Cloudflare's privacy-friendly analytics. Nuxt's config
@@ -53,8 +54,8 @@ export default defineNuxtConfig({
           ].join("; "),
         },
       },
-      "/api/**": { cache: { maxAge: 300, swr: true } },
-      "/api/status": { cache: { maxAge: 60, swr: true } },
+      "/api/**": { cache: { maxAge: 300, swr: false } },
+      "/api/status": { cache: { maxAge: 60, swr: false } },
     },
   },
   nitro: {
