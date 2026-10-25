@@ -1,15 +1,15 @@
 <script setup lang="ts">
 // The relocation answer: a separate promise from the visa one (many postings pay for the move and say nothing about
 // permits, and the other way round). Screen readers hear "Relocation: helps you move".
-import type { RelocationState } from "#shared/answers";
+import { RELOCATION_LABEL, type RelocationState } from "#shared/answers";
 
 const { state, size = "sm" } = defineProps<{ state: RelocationState; size?: "sm" | "md" }>();
 
 const LOOK = {
-  helps: { label: "Helps you move", class: "bg-fill text-fg border-line-strong" },
-  may: { label: "May help you move", class: "text-fg border-line" },
-  no: { label: "No relocation", class: "bg-refuse-tint text-refuse border-refuse-line" },
-  silent: { label: "Says nothing", class: "text-fg-2 border-unknown-line border-dashed" },
+  helps: "bg-fill text-fg border-line-strong",
+  may: "text-fg border-line",
+  no: "bg-refuse-tint text-refuse border-refuse-line",
+  silent: "text-fg-2 border-unknown-line border-dashed",
 } as const;
 
 const look = computed(() => LOOK[state]);
@@ -19,9 +19,9 @@ const icon = computed(() => (size === "md" ? 16 : 14));
 <template>
   <span
     class="inline-flex items-center gap-1.5 rounded-full border font-medium leading-none whitespace-nowrap"
-    :class="[look.class, size === 'md' ? 'h-8 px-3 text-sm' : 'h-7 px-2.5 text-xs']"
+    :class="[look, size === 'md' ? 'h-8 px-3 text-sm' : 'h-7 px-2.5 text-xs']"
   >
-    <span class="sr-only">Relocation: {{ look.label.toLowerCase() }}</span>
+    <span class="sr-only">Relocation: {{ RELOCATION_LABEL[state].toLowerCase() }}</span>
     <svg
       aria-hidden="true"
       :width="icon"
@@ -41,6 +41,6 @@ const icon = computed(() => (size === "md" ? 16 : 14));
       <path v-if="state !== 'silent'" d="M5.75 5V3.5a1 1 0 0 1 1-1h2.5a1 1 0 0 1 1 1V5" />
       <path v-if="state === 'no'" d="M1.5 2l13 13" />
     </svg>
-    <span aria-hidden="true">{{ look.label }}</span>
+    <span aria-hidden="true">{{ RELOCATION_LABEL[state] }}</span>
   </span>
 </template>

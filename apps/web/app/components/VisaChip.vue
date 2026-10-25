@@ -2,33 +2,28 @@
 // The visa answer for a role, in one of five states. Told apart by word, icon and shape, never by colour alone:
 // round chips quote the posting, the square one ("Can sponsor") comes from the law or a register, dashed means
 // nobody says yet. Screen readers hear "Visa: sponsors".
-import type { VisaState } from "#shared/answers";
+import { VISA_LABEL, type VisaState } from "#shared/answers";
 
 const { state, size = "sm" } = defineProps<{ state: VisaState; size?: "sm" | "md" }>();
 
 const LOOK = {
   sponsors: {
-    label: "Sponsors visa",
     spoken: "sponsors",
     class: "bg-accent text-accent-ink border-accent rounded-full",
   },
   may: {
-    label: "May sponsor",
     spoken: "may sponsor",
     class: "bg-accent-tint text-accent border-accent-line rounded-full",
   },
   can: {
-    label: "Can sponsor",
     spoken: "can sponsor, by law or register",
     class: "text-fg border-accent-line rounded-can",
   },
   unknown: {
-    label: "Visa unknown",
     spoken: "unknown",
     class: "text-fg-2 border-unknown-line border-dashed rounded-full",
   },
   wont: {
-    label: "Won't sponsor",
     spoken: "won't sponsor",
     class: "bg-refuse-tint text-refuse border-refuse-line rounded-full",
   },
@@ -75,6 +70,6 @@ const icon = computed(() => (size === "md" ? 16 : 14));
       </template>
       <circle v-else cx="8" cy="8" r="6.25" stroke-dasharray="2.2 2.2" />
     </svg>
-    <span aria-hidden="true">{{ look.label }}</span>
+    <span aria-hidden="true">{{ VISA_LABEL[state] }}</span>
   </span>
 </template>
