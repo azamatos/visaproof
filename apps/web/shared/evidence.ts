@@ -9,7 +9,14 @@ export type JobDetail = {
   id: number;
   title: string;
   url: string;
-  company: { name: string; path: string; board: string | null; boardName: string; others: number };
+  company: {
+    name: string;
+    path: string;
+    board: string | null;
+    boardName: string;
+    others: number;
+    postsForOthers: boolean;
+  };
   place: string;
   workMode: string;
   countries: string[];
@@ -88,17 +95,22 @@ const REGISTER = {
   },
 } as const;
 
-function registerCheck(job: JobDetail, code: "GB" | "NL", where: string): EvidenceItem {
+// A company's check on one register: on it (and still there), not on it, not sure, or not checked yet. The job page
+// and the company page say it the same way.
+export function registerCheck(
+  code: "GB" | "NL",
+  c: { name: string; review: RegisterReview; loaded: string | null; onRegister: boolean },
+  where = "",
+): EvidenceItem {
   const r = REGISTER[code];
-  const review = job.registers[code];
-  const name = job.company.name;
+  const { review, name } = c;
   const base = {
     label: `${r.label}${where}`,
     source: r.source,
-    checked: day(job.registerLoaded[code]),
+    checked: day(c.loaded),
     link: { text: ROUTE[code] ?? "", to: `/countries/${code.toLowerCase()}` },
   };
-  if (review?.verdict === "listed" && job.canIn.includes(code))
+  if (review?.verdict === "listed" && c.onRegister)
     return {
       ...base,
       kind: "visa",
@@ -234,7 +246,21 @@ export function evidence(job: JobDetail): { items: EvidenceItem[]; next: string 
     if (code === "DE") {
       const check = blueCardCheck(job, where);
       if (check) items.push(check);
-    } else items.push(registerCheck(job, code as "GB" | "NL", where));
+    } else {
+      const register = code as "GB" | "NL";
+      items.push(
+        registerCheck(
+          register,
+          {
+            name,
+            review: job.registers[register],
+            loaded: job.registerLoaded[register],
+            onRegister: job.canIn.includes(register),
+          },
+          where,
+        ),
+      );
+    }
   }
   const others = job.countries.filter((c) => !CHECKED.includes(c)).map(countryName);
   if (others.length)

@@ -35,3 +35,6 @@ export const COUNTRIES: Record<string, string> = {
 };
 
 export const countryName = (code: string) => COUNTRIES[code] ?? code;
+
+// "the Netherlands", "the United Kingdom", "Germany": a country's name after "in".
+export const inCountry = (code: string) => (code === "NL" || code === "GB" ? "the " : "") + countryName(code);

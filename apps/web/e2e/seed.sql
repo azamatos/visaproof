@@ -74,4 +74,7 @@ insert into run (kind, started_at, finished_at, stats) values
   ('registers', now() - interval '5 hours', now() - interval '5 hours', '{"nl_ind": 0, "uk_worker": 1}'),
   ('extract', now() - interval '10 hours', now() - interval '10 hours', '{"postings": 3}');
 
+-- A recruiter's board: the employer, and so the sponsor, may be someone else.
+update company set posts_for_others = true where id = 4;
+
 select setval('company_id_seq', 100), setval('posting_id_seq', 100);
