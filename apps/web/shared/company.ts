@@ -14,6 +14,7 @@ export type CompanyDetail = {
   countries: { code: string; n: number }[];
   said: { sponsors: number; may: number; wont: number; quote: string | null; quoteState: VisaState | null };
   unread: number;
+  noText: number;
   registers: {
     GB: { review: RegisterReview; onRegister: boolean };
     NL: { review: RegisterReview; onRegister: boolean };
@@ -21,6 +22,9 @@ export type CompanyDetail = {
   registerLoaded: { GB: string | null; NL: string | null };
   blueCard: { amount: number; currency: string; inGermany: number; clears: number } | null;
   roles: RoleCard[];
+  page: number;
+  pages: number;
+  perPage: number;
 };
 
 // What the company's page says about hiring on a visa: its postings' own words, then the law for each country it
@@ -29,7 +33,14 @@ export function companyEvidence(c: CompanyDetail): EvidenceItem[] {
   const items: EvidenceItem[] = [];
   const { sponsors, may, wont } = c.said;
   const of = (x: number) => `${String(x)} of ${String(c.open)}`;
-  const unread = c.unread ? ` ${String(c.unread)} more mention visas and are read tonight.` : "";
+  const unread = (more: string) =>
+    c.unread
+      ? ` ${String(c.unread)} ${more}mention${c.unread === 1 ? "s" : ""} visas and ${c.unread === 1 ? "is" : "are"} read tonight.`
+      : "";
+  const noText = c.noText
+    ? ` ${String(c.noText)} ${c.noText === 1 ? "has" : "have"} no text yet: the board didn't send it.`
+    : "";
+  const quiet = c.open - c.unread - c.noText;
   if (c.said.quote && c.said.quoteState)
     items.push({
       label: "What its postings say",
@@ -42,16 +53,19 @@ export function companyEvidence(c: CompanyDetail): EvidenceItem[] {
         wont ? `${of(wont)} refuse` : "",
       ]
         .filter(Boolean)
-        .join(", ")}.${unread}`,
+        .join(", ")}.${unread("more ")}`,
       source: "From its postings",
     });
   else
     items.push({
       label: "What its postings say",
       kind: "text",
-      value: "Nothing",
+      value: c.unread ? "Nothing yet" : "Nothing",
       tone: "muted",
-      note: `None of its ${String(c.open)} open roles says anything about visas or work permits.${unread}`,
+      note:
+        quiet === c.open
+          ? `None of its ${String(c.open)} open roles says anything about visas or work permits.`
+          : `${of(quiet)} open roles say${quiet === 1 ? "s" : ""} nothing about visas or work permits.${unread("")}${noText}`,
       source: "From its postings",
     });
 

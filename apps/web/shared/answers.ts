@@ -36,7 +36,6 @@ export type RoleCard = {
   id: number;
   title: string;
   company: string;
-  companySlug: string;
   place: string;
   workMode: string;
   visa: VisaState;

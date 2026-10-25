@@ -16,14 +16,17 @@ const REASON = `case
 
 export default defineEventHandler(async () => {
   const sql = db();
+  // A run that worked: it didn't fail outright, read at least one board, found at least one board.
+  const worked = sql`finished_at is not null and not (stats ? 'error') and coalesce((stats->>'ok')::int, 1) > 0
+    and not (kind = 'discover' and coalesce((stats->>'slugs')::int, 0) = 0)`;
   const [runs, failures, [open], [registers], [reading], [known]] = await Promise.all([
     sql<RunRow[]>`
       select distinct on (kind) kind, finished_at, stats from run
-      where kind in ('ingest', 'registers', 'extract', 'discover') and finished_at is not null
+      where kind in ('ingest', 'extract', 'discover') and ${worked}
       order by kind, finished_at desc`,
     sql<{ reason: string; n: number }[]>`
       select ${sql.unsafe(REASON)} as reason, count(*)::int as n from source_result
-      where run_id = (select id from run where kind = 'ingest' and finished_at is not null order by id desc limit 1)
+      where run_id = (select id from run where kind = 'ingest' and ${worked} order by id desc limit 1)
         and not ok and error !~ 'HTTP 4(04|10)'
       group by 1 order by 2 desc`,
     sql<StatusRaw["open"][]>`
@@ -33,9 +36,13 @@ export default defineEventHandler(async () => {
       from posting where closed_at is null`,
     sql<{ nl: number; uk: number; loaded_at: Date | null; reviewed: number; listed: number }[]>`
       select count(*) filter (where register = 'nl_ind')::int as nl,
-        count(*) filter (where register = 'uk_worker')::int as uk, max(fetched_at) as loaded_at,
+        count(*) filter (where register = 'uk_worker')::int as uk,
+        least(max(fetched_at) filter (where register = 'nl_ind'),
+          max(fetched_at) filter (where register = 'uk_worker')) as loaded_at,
         (select count(distinct company_id)::int from register_review) as reviewed,
-        (select count(distinct company_id)::int from register_review where verdict = 'listed') as listed
+        (select count(distinct company_id)::int from register_review r where verdict = 'listed'
+          and exists (select 1 from register_entry x where x.register = r.register and x.name = r.entry_name))
+          as listed
       from register_entry`,
     sql<StatusRaw["reading"][]>`
       select count(*) filter (where p.mentions and a.read_at is null)::int as waiting,
@@ -52,7 +59,6 @@ export default defineEventHandler(async () => {
     now: new Date().toISOString(),
     runs: {
       ingest: run("ingest"),
-      registers: run("registers"),
       extract: run("extract"),
       discover: run("discover"),
     },

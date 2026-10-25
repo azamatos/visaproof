@@ -30,6 +30,8 @@ export type JobDetail = {
   visa: VisaState;
   canIn: string[];
   visaQuote: string | null;
+  // false when the board never sent the posting's text: nothing in it could be read.
+  hasText: boolean;
   visaUnread: boolean;
   readAt: string | null;
   relocation: RelocationState;
@@ -40,7 +42,13 @@ export type JobDetail = {
   languagesReadAt: string | null;
   registers: { GB: RegisterReview; NL: RegisterReview };
   registerLoaded: { GB: string | null; NL: string | null };
-  blueCard: { amount: number; currency: string; source: string; checkedOn: string } | null;
+  blueCard: {
+    amount: number;
+    currency: string;
+    source: string;
+    appliesFrom: string;
+    checkedOn: string;
+  } | null;
 };
 
 export type EvidenceItem = {
@@ -181,7 +189,7 @@ function blueCardCheck(job: JobDetail, where: string): EvidenceItem | null {
     };
   const facts = [
     { k: "Lowest posted salary", v: money(yearly, rule.currency) },
-    { k: `${new Date(rule.checkedOn).getUTCFullYear()} minimum, IT jobs`, v: minimum },
+    { k: `${String(new Date(rule.appliesFrom).getUTCFullYear())} minimum, IT jobs`, v: minimum },
   ];
   return job.canIn.includes("DE")
     ? {
@@ -209,7 +217,15 @@ export function evidence(job: JobDetail): { items: EvidenceItem[]; next: string 
   const fromPosting = { source: "From the posting", checked: day(job.readAt ?? job.lastSeen) };
 
   // The posting's own words first.
-  if (job.visaUnread)
+  const noText = {
+    kind: "text",
+    value: "No text yet",
+    tone: "muted",
+    note: "The board didn't send this posting's text, so we couldn't read it. We ask again on every read; until then the answer rests on the law and the registers alone.",
+    source: "From the posting",
+  } as const;
+  if (!job.hasText) items.push({ label: "Visa · the posting", ...noText });
+  else if (job.visaUnread)
     items.push({
       label: "Visa · the posting",
       kind: "text",
@@ -282,7 +298,8 @@ export function evidence(job: JobDetail): { items: EvidenceItem[]; next: string 
       source: "Country note",
     });
 
-  if (job.visaUnread)
+  if (!job.hasText) items.push({ label: "Relocation", ...noText, note: "We couldn't read the posting." });
+  else if (job.visaUnread)
     items.push({
       label: "Relocation",
       kind: "text",
@@ -303,7 +320,8 @@ export function evidence(job: JobDetail): { items: EvidenceItem[]; next: string 
     });
 
   const languagesChecked = { source: "From the posting", checked: day(job.languagesReadAt) };
-  if (job.languages === null)
+  if (!job.hasText) items.push({ label: "Languages", ...noText, note: "We couldn't read the posting." });
+  else if (job.languages === null)
     items.push({
       label: "Languages",
       kind: "text",

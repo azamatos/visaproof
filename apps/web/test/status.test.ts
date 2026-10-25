@@ -9,7 +9,6 @@ const raw = (hoursAgo: { ingest?: number; registers?: number; extract?: number }
     now: new Date(now).toISOString(),
     runs: {
       ingest: { finishedAt: at(hoursAgo.ingest, 3), stats: { boards: 2915, failed: 8 } },
-      registers: { finishedAt: at(hoursAgo.registers, 8), stats: {} },
       extract: { finishedAt: at(hoursAgo.extract, 14), stats: {} },
       discover: null,
     },

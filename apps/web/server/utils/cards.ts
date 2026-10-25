@@ -32,7 +32,6 @@ export const toCard = (r: CardRow): RoleCard => ({
   id: r.id,
   title: r.title,
   company: companyName(r.name, r.slug),
-  companySlug: r.slug,
   place: place(r.location_raw, r.countries, r.work_mode, r.remote_scope),
   workMode: WORK_MODE[r.work_mode] ?? "",
   visa: r.visa,

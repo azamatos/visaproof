@@ -22,6 +22,10 @@ describe("place", () => {
     expect(place("Garching b. München (DE); Innsbruck (AT)", ["AT", "DE"], "onsite", "")).toBe(
       "Innsbruck, Austria or Garching b. München, Germany",
     );
+    expect(place("Paris, Île-de-France, France; Berlin, Germany", ["FR", "DE"], "hybrid", "")).toBe(
+      "Paris, France or Berlin, Germany",
+    );
+    expect(place("Berlin", ["DE", "AT"], "onsite", "")).toBe("Berlin, Germany or Austria");
   });
   it("says where remote work is allowed", () => {
     expect(place("Remote", [], "remote", "europe")).toBe("Remote in Europe");

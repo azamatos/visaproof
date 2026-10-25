@@ -4,9 +4,11 @@
 export type Run = { finishedAt: string; stats: Record<string, number> } | null;
 export type StatusRaw = {
   now: string;
-  runs: { ingest: Run; registers: Run; extract: Run; discover: Run };
+  // The last run of each kind that worked; registers go by when each register was last loaded.
+  runs: { ingest: Run; extract: Run; discover: Run };
   failures: { reason: string; n: number }[];
   open: { roles: number; companies: number; countries: number; new24h: number };
+  // loadedAt: the older of the two registers' last loads, so one failing register shows.
   registers: { nl: number; uk: number; loadedAt: string | null; reviewed: number; listed: number };
   reading: { waiting: number; languagesChecked: number };
   boardsKnown: number;
@@ -68,7 +70,8 @@ export function nextRead(now: number): string {
 export function statusOf(raw: StatusRaw): Status {
   const now = Date.parse(raw.now);
   const boards = stateOf(raw.runs.ingest, LIMITS.ingest, now);
-  const registers = stateOf(raw.runs.registers, LIMITS.registers, now);
+  const loaded = raw.registers.loadedAt;
+  const registers = stateOf(loaded ? { finishedAt: loaded, stats: {} } : null, LIMITS.registers, now);
   const reading = stateOf(raw.runs.extract, LIMITS.extract, now);
   const discover = stateOf(raw.runs.discover, LIMITS.discover, now);
   const ingest = raw.runs.ingest;

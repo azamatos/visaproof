@@ -1,5 +1,6 @@
 import type { RelocationState, VisaState } from "#shared/answers";
 import { BOARD_NAMES, boardUrl, companyPath } from "#shared/boards";
+import { COUNTRIES } from "#shared/countries";
 import type { JobDetail, Pay, RegisterReview } from "#shared/evidence";
 import { companyName, place, salary, WORK_MODE } from "#shared/format";
 
@@ -28,6 +29,7 @@ type Row = {
   visa: VisaState;
   can_in: string[];
   visa_quote: string | null;
+  has_text: boolean;
   visa_unread: boolean;
   read_at: Date | null;
   relocation: RelocationState;
@@ -60,7 +62,8 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
         c.name, c.slug, c.ats, c.eu, c.posts_for_others,
         (select count(*)::int from posting o where o.company_id = p.company_id and o.closed_at is null
           and o.id <> p.id) as others,
-        a.visa, a.can_in, a.visa_quote, p.mentions and a.read_at is null as visa_unread, a.read_at,
+        a.visa, a.can_in, a.visa_quote, p.description is not null as has_text,
+        coalesce(p.mentions, false) and a.read_at is null as visa_unread, a.read_at,
         a.relocation, a.relocation_quote, a.languages, a.language_quote, a.written_in, a.languages_read_at,
         a.uk_verdict, a.uk_entry, a.nl_verdict, a.nl_entry
       from posting p join company c on c.id = p.company_id join role_answer a on a.posting_id = p.id
@@ -69,8 +72,8 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
       select max(fetched_at) filter (where register = 'uk_worker') as gb,
         max(fetched_at) filter (where register = 'nl_ind') as nl
       from register_entry`,
-    sql<{ amount: string; currency: string; source_url: string; checked_on: Date }[]>`
-      select amount, currency, source_url, checked_on from visa_rule
+    sql<{ amount: string; currency: string; source_url: string; applies_from: Date; checked_on: Date }[]>`
+      select amount, currency, source_url, applies_from, checked_on from visa_rule
       where country = 'DE' and rule = 'blue_card_reduced' and applies_from <= current_date
       order by applies_from desc limit 1`,
   ]);
@@ -91,7 +94,8 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
     },
     place: place(r.location_raw, r.countries, r.work_mode, r.remote_scope),
     workMode: WORK_MODE[r.work_mode] ?? "",
-    countries: r.countries,
+    // Only the countries Visaproof covers: a role in Skopje and Amsterdam is checked as Amsterdam's.
+    countries: r.countries.filter((c) => c in COUNTRIES),
     pay: r.pay,
     salary: salary(r.pay),
     posted: r.posted.toISOString(),
@@ -102,6 +106,7 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
     visa: r.visa,
     canIn: r.can_in,
     visaQuote: r.visa_quote,
+    hasText: r.has_text,
     visaUnread: r.visa_unread,
     readAt: iso(r.read_at),
     relocation: r.relocation,
@@ -119,6 +124,7 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
           source: blue.source_url.includes("bundesanzeiger")
             ? "Federal Gazette (Bundesanzeiger)"
             : new URL(blue.source_url).host,
+          appliesFrom: blue.applies_from.toISOString(),
           checkedOn: blue.checked_on.toISOString(),
         }
       : null,

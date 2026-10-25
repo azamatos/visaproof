@@ -27,10 +27,10 @@ export function place(raw: string, all: string[], mode: string, scope: string): 
     return `Remote in ${or(names)}`;
   }
   const segments = raw.split(";").map((x) => x.trim());
+  // A country's name in any case, its code only in capitals: "de" in "Île-de-France" isn't Germany.
   const isIn = (c: string, x: string) =>
-    new RegExp(`\\b(${c}|${countryName(c)}${c === "GB" ? "|UK|England|Scotland|Wales" : ""})\\b`, "i").test(
-      x,
-    );
+    new RegExp(`(?<![\\w-])${c}(?![\\w-])`).test(x) ||
+    new RegExp(`\\b(${countryName(c)}${c === "GB" ? "|UK|England|Scotland|Wales" : ""})\\b`, "i").test(x);
   // The city of a place: "Garching b. München (DE)" → "Garching b. München"; none for "Remote" or "Germany".
   const cityOf = (segment: string | undefined) => {
     const city = (segment ?? "")
@@ -41,7 +41,8 @@ export function place(raw: string, all: string[], mode: string, scope: string): 
       .trim();
     return city && !NOT_A_CITY.has(city.toLowerCase()) ? city : "";
   };
-  if (names.length === 2) {
+  // Each city with its own country; a place that names neither country keeps its city: "Berlin, Germany or Austria".
+  if (names.length === 2 && segments.some((x) => countries.some((c) => isIn(c, x)))) {
     return countries
       .map((c) => {
         const city = cityOf(segments.find((x) => isIn(c, x)));
@@ -53,7 +54,7 @@ export function place(raw: string, all: string[], mode: string, scope: string): 
   const city = cityOf(
     segments.length === 1 ? segments[0] : segments.find((x) => countries.some((c) => isIn(c, x))),
   );
-  const where = names.length > 2 ? `${String(names.length)} countries` : (names[0] ?? "");
+  const where = names.length > 2 ? `${String(names.length)} countries` : or(names);
   if (!city) return where || raw;
   return where ? `${city}, ${where}` : city;
 }

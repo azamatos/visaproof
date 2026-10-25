@@ -20,7 +20,7 @@ test("shows each answer with the sentence it comes from, and the way to apply", 
 
 test("says in which country “Can sponsor” holds", async ({ page }) => {
   await page.goto("/jobs/3");
-  await expect(page.getByText("in United Kingdom", { exact: true })).toBeVisible();
+  await expect(page.getByText("in the United Kingdom", { exact: true })).toBeVisible();
   await expect(
     evidence(page).getByRole("heading", { name: "UK sponsor register · United Kingdom" }),
   ).toBeVisible();

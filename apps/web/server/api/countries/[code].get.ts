@@ -40,7 +40,8 @@ export default defineEventHandler(async (event): Promise<CountryDetail> => {
       ? sql<{ companies: number; reviewed: number; listed: number; loaded_at: Date | null }[]>`
           select count(distinct p.company_id)::int as companies,
             count(distinct r.company_id)::int as reviewed,
-            count(distinct r.company_id) filter (where r.verdict = 'listed')::int as listed,
+            count(distinct r.company_id) filter (where r.verdict = 'listed' and exists (
+              select 1 from register_entry x where x.register = r.register and x.name = r.entry_name))::int as listed,
             (select max(fetched_at) from register_entry where register = ${register}) as loaded_at
           from posting p left join register_review r on r.company_id = p.company_id and r.register = ${register}
           where ${here}`
