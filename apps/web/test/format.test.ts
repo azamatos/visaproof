@@ -16,6 +16,9 @@ describe("place", () => {
         "",
       ),
     ).toBe("Berlin, Germany or London, United Kingdom");
+    expect(place("Skopje, MK; Amsterdam, Netherlands", ["MK", "NL"], "hybrid", "")).toBe(
+      "Amsterdam, Netherlands",
+    );
     expect(place("Garching b. München (DE); Innsbruck (AT)", ["AT", "DE"], "onsite", "")).toBe(
       "Innsbruck, Austria or Garching b. München, Germany",
     );

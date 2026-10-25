@@ -17,7 +17,9 @@ const NOT_A_CITY = new Set(
 
 // "Dublin; Dublin, Dublin, Ireland" → "Dublin, Ireland"; "London, UK; Berlin, Germany" → "London, United Kingdom or
 // Berlin, Germany"; remote roles say where remote is allowed.
-export function place(raw: string, countries: string[], mode: string, scope: string): string {
+export function place(raw: string, all: string[], mode: string, scope: string): string {
+  // Only the countries Visaproof covers: a role in Skopje and Amsterdam is shown as Amsterdam's.
+  const countries = all.filter((c) => c in COUNTRIES);
   const names = countries.map(countryName);
   if (mode === "remote") {
     if (scope === "worldwide") return "Remote, anywhere";

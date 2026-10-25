@@ -214,6 +214,14 @@ useSeoMeta({
         <span>The default search hides this role: the posting says it won't sponsor a visa.</span>
       </p>
 
+      <p
+        v-if="job.company.postsForOthers"
+        class="-mt-2 rounded-control border border-refuse-line bg-refuse-tint p-3.5 text-sm text-pretty"
+      >
+        {{ job.company.name }} posts roles for other companies, so the employer, and who would sponsor you,
+        may be someone else: the posting names them. The register checks below are for {{ job.company.name }}.
+      </p>
+
       <div class="flex flex-wrap items-start gap-x-14 gap-y-10">
         <div class="flex min-w-0 flex-[999_1_560px] flex-col gap-6 md:gap-8">
           <div class="-mt-2 flex flex-col gap-2 md:mt-0 md:gap-2.5">

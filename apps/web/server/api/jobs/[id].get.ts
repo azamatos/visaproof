@@ -23,6 +23,7 @@ type Row = {
   slug: string;
   ats: string;
   eu: boolean;
+  posts_for_others: boolean;
   others: number;
   visa: VisaState;
   can_in: string[];
@@ -56,7 +57,7 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
         least(p.posted_at, p.first_seen_at) as posted, p.first_seen_at, p.last_seen_at, p.closed_at,
         coalesce((select json_agg(json_build_object('key', t.key, 'label', t.label) order by t.label)
           from technology t where t.key = any(p.technologies)), '[]') as technologies,
-        c.name, c.slug, c.ats, c.eu,
+        c.name, c.slug, c.ats, c.eu, c.posts_for_others,
         (select count(*)::int from posting o where o.company_id = p.company_id and o.closed_at is null
           and o.id <> p.id) as others,
         a.visa, a.can_in, a.visa_quote, p.mentions and a.read_at is null as visa_unread, a.read_at,
@@ -86,6 +87,7 @@ export default defineEventHandler(async (event): Promise<JobDetail> => {
       board: boardUrl(r.ats, r.slug, r.eu),
       boardName: BOARD_NAMES[r.ats] ?? r.ats,
       others: r.others,
+      postsForOthers: r.posts_for_others,
     },
     place: place(r.location_raw, r.countries, r.work_mode, r.remote_scope),
     workMode: WORK_MODE[r.work_mode] ?? "",

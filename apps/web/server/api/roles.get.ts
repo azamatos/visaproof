@@ -2,20 +2,16 @@ import type { PendingQuery, Row } from "postgres";
 import {
   FAMILIES,
   MODES,
-  type RelocationState,
   SENIORITY,
-  type RoleCard,
   VISA_LEVELS,
   VISA_STATES,
   type VisaLevel,
   type VisaState,
 } from "#shared/answers";
 import { COUNTRIES } from "#shared/countries";
-import { age, companyName, place, salary, WORK_MODE } from "#shared/format";
 
 // Search: open roles with their answers, filtered and sorted, 20 a page, with a count on every filter option. An
-// option's count applies every other filter, so it says what choosing it would leave. "Posted" is the board's own
-// date: the pipeline first saw every role in its first week, so first_seen_at says nothing about age then.
+// option's count applies every other filter, so it says what choosing it would leave.
 
 const PAGE = 20;
 const keys = (xs: readonly { key: string }[]) => xs.map((x) => x.key);
@@ -72,7 +68,7 @@ export default defineEventHandler(async (event) => {
   const page = Math.max(1, Math.min(50, Number(getQuery(event).page) || 1));
   const sort = getQuery(event).sort === "newest" ? "newest" : "strongest";
   const sql = db();
-  const posted = sql`least(p.posted_at, p.first_seen_at)`;
+  const postedAt = posted(sql);
   // "Can sponsor" holds per country (a UK sponsor can't sponsor in Germany): with countries chosen, a role that can
   // sponsor only in others is "unknown" here. The country counts check each country on its own.
   const visaFor = (countries: PendingQuery<Row[]> | null) =>
@@ -98,36 +94,20 @@ export default defineEventHandler(async (event) => {
     if (skip !== "families" && f.families.length) c.push(sql`p.family in ${sql(f.families)}`);
     if (skip !== "seniority" && f.seniority.length) c.push(sql`p.seniority in ${sql(f.seniority)}`);
     if (skip !== "modes" && f.modes.length) c.push(sql`p.work_mode in ${sql(f.modes)}`);
-    if (skip !== "within" && f.within) c.push(sql`${posted} > now() - make_interval(days => ${f.within})`);
+    if (skip !== "within" && f.within) c.push(sql`${postedAt} > now() - make_interval(days => ${f.within})`);
     return c.reduce((all, one) => sql`${all} and ${one}`);
   };
   const from = sql`posting p join company c on c.id = p.company_id join role_answer a on a.posting_id = p.id`;
-  const order = sort === "newest" ? sql`${posted} desc, p.id desc` : sql`${rank}, ${posted} desc, p.id desc`;
+  const order =
+    sort === "newest" ? sql`${postedAt} desc, p.id desc` : sql`${rank}, ${postedAt} desc, p.id desc`;
 
   const group = (column: PendingQuery<Row[]>, skip: Facet) =>
     sql<{ key: string; n: number }[]>`
       select ${column} as key, count(*)::int as n from ${from} where ${where(skip)} group by 1`;
   const [rows, [total], states, countries, [switches], families, seniority, modes, [within]] =
     await Promise.all([
-      sql<
-        {
-          id: number;
-          title: string;
-          name: string | null;
-          slug: string;
-          location_raw: string;
-          countries: string[];
-          work_mode: string;
-          remote_scope: string;
-          visa: VisaState;
-          relocation: RelocationState;
-          languages: string[] | null;
-          pay: { min: number; max: number; currency: string; period: string } | null;
-          posted: Date;
-        }[]
-      >`
-      select p.id::int as id, p.title, c.name, c.slug, p.location_raw, p.countries, p.work_mode, p.remote_scope,
-        ${visa} as visa, a.relocation, a.languages, p.pay, ${posted} as posted
+      sql<CardRow[]>`
+      select ${cardColumns(sql, visa)}
       from ${from} where ${where()} order by ${order} limit ${PAGE} offset ${(page - 1) * PAGE}`,
       sql<{ n: number }[]>`select count(*)::int as n from ${from} where ${where()}`,
       sql<{ visa: VisaState; n: number }[]>`
@@ -145,9 +125,9 @@ export default defineEventHandler(async (event) => {
       group(sql`p.seniority`, "seniority"),
       group(sql`p.work_mode`, "modes"),
       sql<{ d1: number; d7: number; d30: number; any: number }[]>`
-      select count(*) filter (where ${posted} > now() - interval '1 day')::int as d1,
-        count(*) filter (where ${posted} > now() - interval '7 days')::int as d7,
-        count(*) filter (where ${posted} > now() - interval '30 days')::int as d30, count(*)::int as any
+      select count(*) filter (where ${postedAt} > now() - interval '1 day')::int as d1,
+        count(*) filter (where ${postedAt} > now() - interval '7 days')::int as d7,
+        count(*) filter (where ${postedAt} > now() - interval '30 days')::int as d30, count(*)::int as any
       from ${from} where ${where("within")}`,
     ]);
   const keyed = (xs: { key: string; n: number }[]) =>
@@ -156,19 +136,7 @@ export default defineEventHandler(async (event) => {
   const byState = Object.fromEntries(
     VISA_STATES.map((s) => [s, states.find((v) => v.visa === s)?.n ?? 0]),
   ) as Record<VisaState, number>;
-  const roles: RoleCard[] = rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    company: companyName(r.name, r.slug),
-    companySlug: r.slug,
-    place: place(r.location_raw, r.countries, r.work_mode, r.remote_scope),
-    workMode: WORK_MODE[r.work_mode] ?? "",
-    visa: r.visa,
-    relocation: r.relocation,
-    languages: r.languages,
-    salary: salary(r.pay),
-    posted: age(r.posted),
-  }));
+  const roles = rows.map(toCard);
   return {
     total: total?.n ?? 0,
     page,
