@@ -21,6 +21,8 @@ grep -q '^WEB_DB_PASSWORD=' .env || echo "WEB_DB_PASSWORD=$(openssl rand -hex 24
 docker compose build -q pipeline web
 docker compose up -d --wait db
 docker compose run --rm -T pipeline migrate </dev/null
+# a new technologies dictionary reads the postings again (a few seconds)
+docker compose run --rm -T pipeline technologies </dev/null
 
 # "site" reads everything and writes nothing; tables and views added later are readable too. The password goes in
 # through the environment, never on a command line.

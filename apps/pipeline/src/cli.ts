@@ -7,6 +7,7 @@ import { sample, score, scoreLanguages } from "./evaluation.ts";
 import { extract } from "./extract.ts";
 import { digest } from "./digest.ts";
 import { checkLanguages } from "./languages.ts";
+import { readTechnologies } from "./technologies.ts";
 
 const HELP = `node src/cli.ts <command>
 
@@ -19,6 +20,7 @@ const HELP = `node src/cli.ts <command>
   match                   match companies to the registers again
   reviews <file.jsonl> [by]
                           load reviewed register statuses (checked against the registers first)
+  technologies            fill the technology table and read the postings an older dictionary read
   report                  print the numbers as Markdown
   digest [host.json]      print the summary of the last 24 hours as Telegram HTML (deploy/digest.sh sends it,
                           passing the backup, the disk and the failed units as JSON)
@@ -66,6 +68,9 @@ try {
       await loadReviews(file, args[1]);
       break;
     }
+    case "technologies":
+      await readTechnologies();
+      break;
     case "report":
       await report();
       break;
