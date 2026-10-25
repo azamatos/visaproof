@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { inScope, where } from "../src/location.ts";
 import { familyOf, seniorityOf } from "../src/roles.ts";
@@ -450,5 +451,13 @@ describe("technologiesOf", () => {
     const go = technologyRows().find((r) => r.key === "go");
     expect(go?.search).toEqual(expect.arrayContaining(["go", "golang"]));
     expect(new Set(technologyRows().map((r) => r.key)).size).toBe(technologyRows().length);
+  });
+});
+
+describe("mentions_visa", () => {
+  it("is the same pattern in SQL as the extractor's", () => {
+    const migration = readFileSync(new URL("../migrations/009_mentions_visa.sql", import.meta.url), "utf8");
+    expect(/~\* '(.*)';/.exec(migration)?.[1]).toBe(MENTIONS_RE.source);
+    expect(MENTIONS_RE.flags).toBe("i");
   });
 });
