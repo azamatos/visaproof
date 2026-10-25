@@ -20,7 +20,7 @@ threshold. Most of that can be done once, by a machine, with evidence.
 - It grew out of a private script that read a few company job boards and flagged visa sentences. This is that
   idea made public and done properly, for everyone who needs it.
 - It's a portfolio project that shows the full stack in the open: a data pipeline, a database, an AI extraction
-  step with measured accuracy, and a fast React interface, used by real people.
+  step with measured accuracy, and a fast Nuxt (Vue) interface, used by real people.
 
 ## Who it's for
 
@@ -40,7 +40,7 @@ threshold. Most of that can be done once, by a machine, with evidence.
 
 ## Competitors
 
-Checked 2026-10-17. Re-check before M3.
+Checked 2026-10-17. Re-check before the public launch (M4).
 
 | Site                                                                                      | What it does                                                                                                                                                                            | Registers        | Quotes evidence | Money                                       |
 | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------- | ------------------------------------------- |
@@ -65,9 +65,11 @@ that's where the gap is widest. Germany is also the biggest market for relocatin
 
 ## What success looks like
 
-- **MVP (Jan 4, 2027):** ~170 companies, daily ingestion with no manual steps, every role with a verdict, search
-  and filters, job and company pages, published eval numbers, Lighthouse ≥ 95.
-- **Launch (mid-January):** public repo with a strong README, shared where relocating developers gather.
+- **MVP (Oct 30, 2026):** about 2,500 companies' boards found automatically, ingestion every 6 hours with no manual
+  steps, every role with an answer and its evidence, search and filters, job, company and country pages, published
+  eval numbers, Lighthouse ≥ 95.
+- **Launch (November, when the owner is happy with the MVP):** public repo with a strong README, shared where
+  relocating developers gather.
 - **After launch:** real usage (weekly visitors, searches, clicks to apply), published with the other numbers; companies
   added on request.
 
