@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { Ats } from "./adapters/index.ts";
-import { sql } from "./db.ts";
+import { finishRun, sql, startRun } from "./db.ts";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { fetchJson } from "./http.ts";
 import { errorText } from "./text.ts";
@@ -66,6 +66,9 @@ export async function discoverCommonCrawl(crawls = 2) {
     SET parquet_metadata_cache = true; SET enable_http_metadata_cache = true;`);
   const found = new Map<string, Found>();
   const failed: string[] = [];
+  // Recorded like the other jobs, for the status page.
+  const runId = await startRun("discover");
+  let added = 0;
   // Boards are saved after every crawl, so a later failure can't lose what was found.
   for (const { id } of list.slice(0, crawls)) {
     let files: string;
@@ -108,10 +111,12 @@ export async function discoverCommonCrawl(crawls = 2) {
         failed.push(`${id} ${source.host}: ${errorText(e)}`);
       }
     }
-    const added = await addBoards([...found.values()], "commoncrawl");
-    console.log(`${id}: ${found.size} slugs so far, ${added} new boards`);
+    const now = await addBoards([...found.values()], "commoncrawl");
+    added += now;
+    console.log(`${id}: ${found.size} slugs so far, ${now} new boards`);
   }
   con.closeSync();
+  await finishRun(runId, { slugs: found.size, added, failed: failed.length });
   if (failed.length) throw new Error(`common crawl, failed:\n  ${failed.join("\n  ")}`);
 }
 
