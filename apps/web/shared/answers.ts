@@ -28,7 +28,7 @@ export type RoleCard = {
   relocation: RelocationState;
   languages: string[] | null;
   salary: string | null;
-  firstSeen: string;
+  posted: string;
 };
 
 // The other filters, in the order the design lists them.
