@@ -8,3 +8,7 @@ CLAUDE.local.md
 # Nuxt build output
 .nuxt/
 .output/
+
+# browser tests
+test-results/
+playwright-report/

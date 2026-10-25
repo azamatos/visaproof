@@ -25,3 +25,37 @@ jobs:
       # the images the server runs: prove the lockfile and the Dockerfiles still build
       - run: docker build -f apps/pipeline/Dockerfile -t sponsored-pipeline .
       - run: docker build -f apps/web/Dockerfile -t sponsored-web .
+
+  browser:
+    name: Browser tests (Playwright + axe)
+    runs-on: ubuntu-latest
+    # A test database of made-up roles (apps/web/e2e/seed.sql), the same Postgres as the server's
+    services:
+      db:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: sponsored
+          POSTGRES_PASSWORD: sponsored
+          POSTGRES_DB: visaproof_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sponsored" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://sponsored:sponsored@localhost:5432/visaproof_e2e
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web exec playwright install --with-deps chromium
+      - run: pnpm --filter web e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/web/test-results/
+          retention-days: 7
