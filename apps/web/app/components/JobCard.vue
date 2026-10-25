@@ -71,9 +71,7 @@ const language = computed(() =>
         </svg>
         {{ job.salary }}
       </span>
-      <span class="font-mono text-mono text-muted"
-        ><span class="sr-only">First seen </span>{{ job.firstSeen }}</span
-      >
+      <span class="font-mono text-mono text-muted"><span class="sr-only">Posted </span>{{ job.posted }}</span>
     </div>
   </article>
 </template>

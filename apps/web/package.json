@@ -9,10 +9,12 @@
     "build": "nuxt build",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run"
   },
   "dependencies": {
     "@nuxt/fonts": "^1.1.0",
+    "lru-cache": "^11.5.3",
     "nuxt": "^4.6.2",
     "postgres": "^3.4.9",
     "reka-ui": "^2.11.0",
@@ -24,6 +26,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
+    "vitest": "^5.0.5",
     "vue-tsc": "^3.3.13"
   }
 }

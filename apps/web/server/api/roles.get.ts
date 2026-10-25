@@ -14,7 +14,8 @@ import { COUNTRIES } from "#shared/countries";
 import { age, companyName, place, salary, WORK_MODE } from "#shared/format";
 
 // Search: open roles with their answers, filtered and sorted, 20 a page, with a count on every filter option. An
-// option's count applies every other filter, so it says what choosing it would leave.
+// option's count applies every other filter, so it says what choosing it would leave. "Posted" is the board's own
+// date: the pipeline first saw every role in its first week, so first_seen_at says nothing about age then.
 
 const PAGE = 20;
 const keys = (xs: readonly { key: string }[]) => xs.map((x) => x.key);
@@ -71,16 +72,25 @@ export default defineEventHandler(async (event) => {
   const page = Math.max(1, Math.min(50, Number(getQuery(event).page) || 1));
   const sort = getQuery(event).sort === "newest" ? "newest" : "strongest";
   const sql = db();
+  const posted = sql`least(p.posted_at, p.first_seen_at)`;
+  // "Can sponsor" holds per country (a UK sponsor can't sponsor in Germany): with countries chosen, a role that can
+  // sponsor only in others is "unknown" here. The country counts check each country on its own.
+  const visaFor = (countries: PendingQuery<Row[]> | null) =>
+    countries
+      ? sql`case when a.visa = 'can' and not (a.can_in && ${countries}) then 'unknown' else a.visa end`
+      : sql`a.visa`;
+  const visa = visaFor(f.countries.length ? sql`${f.countries}::text[]` : null);
+  const rank = sql`case ${visa} when 'sponsors' then 1 when 'may' then 2 when 'can' then 3 when 'unknown' then 4 else 5 end`;
 
   // Every filter as a condition; a facet's own condition is left out when counting its options.
-  const where = (skip?: Facet) => {
+  const where = (skip?: Facet, visaHere = visa) => {
     const c: PendingQuery<Row[]>[] = [sql`p.closed_at is null`];
-    if (f.q) {
-      const like = `%${f.q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
-      const word = `\\m${f.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\M`;
-      c.push(sql`(p.title ilike ${like} or c.name ilike ${like} or p.description ~* ${word})`);
-    }
-    if (skip !== "visa") c.push(sql`a.visa in ${sql(f.visa.states)}`);
+    // A word in the title, the start of a word in the company's name, or a technology the posting names, by any
+    // of its names ("golang", "k8s", "c++"). The posting's own text isn't searched: too slow, and too loose.
+    if (f.q)
+      c.push(sql`(p.title ~* ${wordPattern(f.q)} or coalesce(c.name, c.slug) ~* ${startPattern(f.q)}
+        or p.technologies && array(select key from technology where ${f.q.toLowerCase()} = any(search)))`);
+    if (skip !== "visa") c.push(sql`${visaHere} in ${sql(f.visa.states)}`);
     if (skip !== "countries" && f.countries.length) c.push(sql`p.countries && ${f.countries}::text[]`);
     if (skip !== "relocation" && f.relocation) c.push(sql`a.relocation = 'helps'`);
     if (skip !== "noLanguage" && f.noLanguage) c.push(sql`a.languages = '{}'`);
@@ -88,20 +98,16 @@ export default defineEventHandler(async (event) => {
     if (skip !== "families" && f.families.length) c.push(sql`p.family in ${sql(f.families)}`);
     if (skip !== "seniority" && f.seniority.length) c.push(sql`p.seniority in ${sql(f.seniority)}`);
     if (skip !== "modes" && f.modes.length) c.push(sql`p.work_mode in ${sql(f.modes)}`);
-    if (skip !== "within" && f.within)
-      c.push(sql`p.first_seen_at > now() - make_interval(days => ${f.within})`);
+    if (skip !== "within" && f.within) c.push(sql`${posted} > now() - make_interval(days => ${f.within})`);
     return c.reduce((all, one) => sql`${all} and ${one}`);
   };
   const from = sql`posting p join company c on c.id = p.company_id join role_answer a on a.posting_id = p.id`;
-  const order =
-    sort === "newest"
-      ? sql`p.first_seen_at desc, p.id desc`
-      : sql`a.visa_rank, p.first_seen_at desc, p.id desc`;
+  const order = sort === "newest" ? sql`${posted} desc, p.id desc` : sql`${rank}, ${posted} desc, p.id desc`;
 
   const group = (column: PendingQuery<Row[]>, skip: Facet) =>
     sql<{ key: string; n: number }[]>`
       select ${column} as key, count(*)::int as n from ${from} where ${where(skip)} group by 1`;
-  const [rows, [total], visa, countries, [switches], families, seniority, modes, [within]] =
+  const [rows, [total], states, countries, [switches], families, seniority, modes, [within]] =
     await Promise.all([
       sql<
         {
@@ -117,18 +123,19 @@ export default defineEventHandler(async (event) => {
           relocation: RelocationState;
           languages: string[] | null;
           pay: { min: number; max: number; currency: string; period: string } | null;
-          first_seen_at: Date;
+          posted: Date;
         }[]
       >`
       select p.id::int as id, p.title, c.name, c.slug, p.location_raw, p.countries, p.work_mode, p.remote_scope,
-        a.visa, a.relocation, a.languages, p.pay, p.first_seen_at
+        ${visa} as visa, a.relocation, a.languages, p.pay, ${posted} as posted
       from ${from} where ${where()} order by ${order} limit ${PAGE} offset ${(page - 1) * PAGE}`,
       sql<{ n: number }[]>`select count(*)::int as n from ${from} where ${where()}`,
       sql<{ visa: VisaState; n: number }[]>`
-      select a.visa, count(*)::int as n from ${from} where ${where("visa")} group by 1`,
+      select ${visa} as visa, count(*)::int as n from ${from} where ${where("visa")} group by 1`,
       sql<{ code: string; n: number }[]>`
       select x.code, count(*)::int as n from ${from}, unnest(p.countries) as x(code)
-      where ${where("countries")} and x.code in ${sql(Object.keys(COUNTRIES))} group by 1 order by 2 desc`,
+      where ${where("countries", visaFor(sql`array[x.code]`))} and x.code in ${sql(Object.keys(COUNTRIES))}
+      group by 1 order by 2 desc`,
       sql<{ relocation: number; no_language: number; salary: number }[]>`
       select
         (select count(*)::int from ${from} where ${where("relocation")} and a.relocation = 'helps') as relocation,
@@ -138,16 +145,16 @@ export default defineEventHandler(async (event) => {
       group(sql`p.seniority`, "seniority"),
       group(sql`p.work_mode`, "modes"),
       sql<{ d1: number; d7: number; d30: number; any: number }[]>`
-      select count(*) filter (where p.first_seen_at > now() - interval '1 day')::int as d1,
-        count(*) filter (where p.first_seen_at > now() - interval '7 days')::int as d7,
-        count(*) filter (where p.first_seen_at > now() - interval '30 days')::int as d30, count(*)::int as any
+      select count(*) filter (where ${posted} > now() - interval '1 day')::int as d1,
+        count(*) filter (where ${posted} > now() - interval '7 days')::int as d7,
+        count(*) filter (where ${posted} > now() - interval '30 days')::int as d30, count(*)::int as any
       from ${from} where ${where("within")}`,
     ]);
   const keyed = (xs: { key: string; n: number }[]) =>
     Object.fromEntries(xs.map((x) => [x.key, x.n])) as Record<string, number>;
 
   const byState = Object.fromEntries(
-    VISA_STATES.map((s) => [s, visa.find((v) => v.visa === s)?.n ?? 0]),
+    VISA_STATES.map((s) => [s, states.find((v) => v.visa === s)?.n ?? 0]),
   ) as Record<VisaState, number>;
   const roles: RoleCard[] = rows.map((r) => ({
     id: r.id,
@@ -160,7 +167,7 @@ export default defineEventHandler(async (event) => {
     relocation: r.relocation,
     languages: r.languages,
     salary: salary(r.pay),
-    firstSeen: age(r.first_seen_at),
+    posted: age(r.posted),
   }));
   return {
     total: total?.n ?? 0,

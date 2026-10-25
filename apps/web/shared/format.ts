@@ -58,14 +58,15 @@ export function salary(
   return `${sym}${range} ${PER[pay.period] ?? ""}`.trim();
 }
 
-// How long ago a role was first seen, in words: "Today", "Yesterday", "3 days ago", "2 weeks ago".
+// How long ago a role was posted, in words: "Today", "Yesterday", "3 days ago", "2 weeks ago", "2 years ago".
 export function age(date: Date | string, now = Date.now()): string {
   const days = Math.floor((now - new Date(date).getTime()) / 86_400_000);
   if (days < 1) return "Today";
   if (days < 2) return "Yesterday";
   if (days < 14) return `${String(days)} days ago`;
   if (days < 60) return `${String(Math.floor(days / 7))} weeks ago`;
-  return `${String(Math.floor(days / 30))} months ago`;
+  if (days < 730) return `${String(Math.floor(days / 30))} months ago`;
+  return `${String(Math.floor(days / 365))} years ago`;
 }
 
 // Boards that don't send their company's name have only a slug: "the-exploration-company" → "The Exploration
