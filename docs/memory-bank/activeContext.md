@@ -1,27 +1,28 @@
 # Active context
 
-**Updated 2026-10-24, late evening.** Read this first. The next session starts with "Next steps" below.
+**Updated 2026-10-25, afternoon.** Read this first. The next session starts with "Next steps" below.
 
 ## Where things stand
 
-- **Pipeline** (on the server, `deploy/README.md`): every 6 hours it reads the job boards that are due (quiet
-  boards in weekly slots, Workday skipped in its maintenance window), keeps software roles in the EU, EEA, UK and
-  Switzerland, and closes the ones that disappear. Registers reload daily, discovery weekly. Nightly at 01:00 UTC
-  on the owner's Claude subscription: the visa extraction (Opus 5.5, ~1,670 postings left after the first night),
-  then the language check (Sonnet, about 3,000 postings a night until all are read).
-- **Answers:** the `role_answer` view (migration 006) gives each role one of the five visa states, relocation and
-  languages, each with its evidence. "Can sponsor" comes from `register_review` (the 200 biggest NL and UK
-  employers, reviewed by agents with evidence: `apps/pipeline/reviews/registers.jsonl`) and the German Blue Card
-  minimum (`visa_rule`, checked at the source on 2026-10-24). About 2,130 roles are "Can sponsor".
-- **Site** (`apps/web`, Nuxt 4 + Tailwind 4 + Reka UI, matching the owner's design): the search page only. Live
-  search, every filter with counts (sidebar on a desktop, sheet on a phone), dark and light themes, our own
-  `UiSelect`, `UiExternalLink` (new tab). **Live as a preview at visaproof.azamatos.com**, not indexed
-  (`X-Robots-Tag: noindex` in `deploy/caddy/sponsored.caddy`) until the public launch. Job cards link to
-  `/jobs/:id`, and the header to `/method` and `/status`: those pages don't exist yet (404).
-- **Ops:** Telegram gets 🚨 alerts with what they mean, ✅ "works again", and a daily summary at 06:00 UTC with
-  🟢 🟡 🔴 per part. CI: types, lint, format, unit tests, both Docker images.
-- The repo is `azamatos/visaproof` (renamed from `azamatos/sponsored` on 2026-10-24), public. The folder and the
-  server paths keep the working name `sponsored`.
+- **Pipeline** (on the server, `deploy/README.md`): every 6 hours it reads the job boards that are due, keeps
+  software roles in the EU, EEA, UK and Switzerland, closes the ones that disappear, and recognises each posting's
+  technologies (`src/technologies.ts`). Registers reload daily, discovery weekly (now recorded as a run). Nightly at
+  01:00 UTC on the owner's Claude subscription: the visa extraction (Opus 5.5), then the language check (Sonnet,
+  about 3,000 postings a night until all are read).
+- **Answers:** the `role_answer` view gives each role one of the five visa states, relocation and languages, each
+  with its evidence, and `can_in`, the countries where "Can sponsor" holds. Register reviews cover the 200 biggest NL
+  and UK employers; `reviews/companies.jsonl` names the 200 biggest boards that send no name.
+- **Site** (`apps/web`), all pages built to the design on branch `site-week` (2026-10-25), **not merged or deployed
+  yet**: search (by title word, company and technology; the board's posting date; per-country "Can sponsor"), the
+  job page with the evidence panel and "Report a wrong answer" (an email to `hi@azamatos.com`), company pages,
+  country pages (full permit guides for Germany, the Netherlands and the UK; "not researched yet" elsewhere),
+  Method, Status with a stale-data notice on every page, a 404 page, a content security policy, API caching.
+  The live preview at visaproof.azamatos.com still runs the search-only version from 2026-10-24.
+- **Tests:** pipeline unit tests (65), site unit tests (18), browser tests with Playwright and axe on a phone and a
+  desktop (51, against `e2e/seed.sql`); CI has a new `browser` job with Postgres 18, not run on GitHub yet.
+- **Lighthouse on a phone** (local build, HTML uncompressed): job page 96, search 92, accessibility 100 everywhere.
+  The live preview scored 93 (old code: a 900 ms document). Re-measure after the deploy.
+- The repo is `azamatos/visaproof`, public. The folder and the server paths keep the working name `sponsored`.
 
 ## Decided by the owner
 
@@ -39,54 +40,56 @@
 1. **Design:** the owner's Claude Design canvas (27 boards; link in `CLAUDE.local.md`, private). Accent "Visa
    blue" `#76beff` (light `#0863a9`), orange `#f99f5d` (light `#a14808`) for refusals; a light theme with a
    System / Dark / Light switch.
-2. **Corrections address:** `visaproof@azamatos.com` was chosen. Since 2026-10-24 azamatos.com already has
-   Cloudflare Email Routing (for `hi@azamatos.com`), so it's one more routing rule, no new DNS records; or the site
-   uses `hi@azamatos.com`. Confirm with the owner before Friday.
-3. **Search:** searches as you type (0.4 s, from two letters; Enter at once; an emptied box resets). "Clear all"
+2. **Search:** searches as you type (0.4 s, from two letters; Enter at once; an emptied box resets). "Clear all"
    clears the filters, not the search text.
-4. **Links:** every link to another site opens in a new tab and says so (`UiExternalLink`); no native `<select>`
-   (`UiSelect`). Rules in `techContext.md` → Components.
-5. **Preview:** published now, with `noindex` until the public launch.
+3. **Links:** every link to another site opens in a new tab and says so (`UiExternalLink`); no native `<select>`
+   (`UiSelect`). Rules in `techContext.md` → Website.
+4. **Preview:** published now, with `noindex` until the public launch.
+
+2026-10-25 (after a review of the project and the plan; the owner agreed with all of it):
+
+1. **Search matches** the title, the company and a list of technologies recognised in each posting (a dictionary
+   with aliases), not the posting's whole text.
+2. **Company names:** agents name the biggest unnamed boards with evidence, like the register review.
+3. **Country pages:** full permit guides for Germany, the Netherlands and the UK only for the MVP; other countries
+   say they aren't researched yet.
+4. **Corrections address:** `hi@azamatos.com` (already routed). "Report a wrong answer" writes an email to it.
+5. The order of work: the review's bugs first (board dates, technology search, per-country "Can sponsor"), then
+   the job page, then Method and Status, then company and country pages; browser tests come with each page.
 
 ## Waiting for the owner
 
-- **What search matches** (proposed 2026-10-24, not decided): today it's the title, the company and any word in
-  the posting's text, which is slow (~1 s) and imprecise ("C" matches 11,080 of 14,765 roles, "go" matches
-  "go-to-market"). Proposal: title, company and a list of technologies recognised in each posting (a dictionary
-  with aliases: Go/Golang, k8s/Kubernetes, C++, .NET, Java ≠ JavaScript), stored per posting with a GIN index.
-  Fast, precise, and the same list can show the stack on cards and become a filter. Ask before building.
-- **Method and Status** (explained 2026-10-24; the owner asked what they're for, no reply yet on extras): Method is
-  why the answers can be trusted (static text, a dated accuracy table, live counts from `/api/stats`); Status is
-  whether they're fresh (`/api/status`: last run of each job, failures by board type, extraction backlog,
-  registers; fresh < 7 h, late 7–13 h, stale > 13 h, with a notice on every page when stale). Public-safe facts
-  only. Optional: discovery records its runs (one line), a few days of history.
-- **Spot-check** about 20 register reviews (planned for Mon Oct 26): prepare a short page with the 21
-  medium-confidence "listed" first, then a few "not listed".
-- Thu Oct 29: review the preview. Fri Oct 30: the corrections address.
+- **Merge and deploy `site-week`**: five new migrations (007–011) run on deploy, then `technologies` and `names`;
+  about 10 seconds of table rewrites. Push the branch and open a PR first so CI runs
+  the new browser job; `/code-review ultra` can review it.
+- **Spot-check** about 20 register reviews (Mon Oct 26): the 21 medium-confidence "listed" first, then a few "not
+  listed". Plus the names the agents flagged: two "Kraken" boards (the energy one is now "Kraken Technologies"),
+  "OSP Spain" vs "Otto Group one.O", "10x Team" vs "10x", Pear VC (a fund's board: its roles are at Wexler) and
+  NDEAVOUR CONSULTING (a recruiter).
+- Thu Oct 29: review the preview on a phone and a desktop.
 
 ## Next steps (in order)
 
-1. Ask the owner about search matching; build the technologies list if yes.
-2. The job page (`/jobs/:id`): the facts on top, the evidence panel (visa, relocation, register or Blue Card
-   check, languages, each with its quote or entry and "checked" date), salary, "Apply on the company's site"
-   (`UiExternalLink`), "Report a wrong answer", other roles at the company; loading, closed and not-found states.
-   Design boards: Job-phone, Job-desktop, Job-answers, Job-states. Endpoint `/api/jobs/[id]`.
-3. `/api/stats` (footer, home, Method) and `/api/status` (Status, the stale-data notice).
-4. Company and country pages (`/companies/...`, `/countries/[code]`): register status, the country's route with
-   `visa_rule` amounts and sources. Mind boards that post for others ("Referral Board" is Elastic's referral
-   board; staffing agencies), and companies without a name yet (slug title-cased for now).
-5. Method and Status pages.
-6. Playwright + axe tests in CI (needs a small test database), Lighthouse ≥ 95 on a phone; `docs/learning/` notes.
-7. Update this file and `progress.md`; deploy (`DEPLOY_HOST=<alias> deploy/deploy.sh`).
+1. After the owner's go: push, PR, CI green, merge, deploy (`DEPLOY_HOST=<alias> deploy/deploy.sh`); check the
+   pages on the live preview; Lighthouse on a phone against production (target ≥ 95).
+2. The spot-check: corrections go back into `reviews/registers.jsonl` and `reviews/companies.jsonl` with
+   `reviewed_by: owner`, then load them (`cli.ts reviews`, `cli.ts names`).
+3. Boards that post for others beyond the 6 flagged: find more (staffing agencies, aggregators), and decide whether
+   their register answers should count at all.
+4. `docs/learning/` notes for the owner (Nuxt and Vue concepts as they appear in the code).
+5. Polish from the owner's Thursday review.
+6. Update this file and `progress.md`.
 
 ## Open questions
 
 - Lever: Common Crawl has no URLs for `jobs.lever.co`, so only the seed list and the EU host cover Lever.
 - Workday: only the seed tenants are read; discovering more costs dozens of requests per tenant.
-- Register reviews cover the 200 biggest employers; the rest stay "Unknown" unless the posting says something.
-  Groups with several entities (some listed, some not) are marked unsure.
-- Staffing agencies and aggregators post other companies' roles: flag them so the agency isn't read as the sponsor.
+- Register reviews cover the 200 biggest employers; the rest stay "not checked yet" unless the posting says
+  something. Groups with several entities (some listed, some not) are marked unsure.
 - UK going rates per occupation code aren't researched (the UK salary check waits until after launch).
+- The language check fills over the next nights; until then "No local language" and the country pages' language
+  numbers cover only the postings read so far (they say so).
+- The technology matcher still gets "Unity" wrong about 2 times in 6 (a company value, a C test framework).
 
 Settled earlier: the eval bar is precision ≥ 95% for "offers"; countries at launch are the EU, EEA, UK and
 Switzerland, with Germany done best; the repo is public from day one.
