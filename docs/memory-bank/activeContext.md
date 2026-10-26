@@ -1,6 +1,6 @@
 # Active context
 
-**Updated 2026-10-25, afternoon.** Read this first. The next session starts with "Next steps" below.
+**Updated 2026-10-26.** Read this first. The next session starts with "Next steps" below.
 
 ## Where things stand
 
@@ -12,16 +12,16 @@
 - **Answers:** the `role_answer` view gives each role one of the five visa states, relocation and languages, each
   with its evidence, and `can_in`, the countries where "Can sponsor" holds. Register reviews cover the 200 biggest NL
   and UK employers; `reviews/companies.jsonl` names the 200 biggest boards that send no name.
-- **Site** (`apps/web`), all pages built to the design on branch `site-week` (2026-10-25), **not merged or deployed
-  yet**: search (by title word, company and technology; the board's posting date; per-country "Can sponsor"), the
+- **Site** (`apps/web`), all pages built to the design, merged (PR #1) and deployed on 2026-10-26: search (by title word, company and technology; the board's posting date; per-country "Can sponsor"), the
   job page with the evidence panel and "Report a wrong answer" (an email to `hi@azamatos.com`), company pages,
   country pages (full permit guides for Germany, the Netherlands and the UK; "not researched yet" elsewhere),
   Method, Status with a stale-data notice on every page, a 404 page, a content security policy, API caching.
-  The live preview at visaproof.azamatos.com still runs the search-only version from 2026-10-24.
+  Live at visaproof.azamatos.com, still `noindex`.
 - **Tests:** pipeline unit tests (65), site unit tests (20), browser tests with Playwright and axe on a phone and a
   desktop (51, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
-- **Lighthouse on a phone** (local build, HTML uncompressed): job page 96, search 92, accessibility 100 everywhere.
-  The live preview scored 93 (old code: a 900 ms document). Re-measure after the deploy.
+- **Lighthouse on a phone, production** (2026-10-26): performance search 100, job 98, company 96, Germany 99,
+  Status 97; accessibility 100; SEO 63 is the intended `noindex`. Best practices 96 only because this Mac's DNS
+  blocks Cloudflare's analytics script (a console error in the test, not on a visitor's phone).
 - The repo is `azamatos/visaproof`, public. The folder and the server paths keep the working name `sponsored`.
 
 ## Decided by the owner
@@ -59,26 +59,19 @@
 
 ## Waiting for the owner
 
-- **Merge and deploy `site-week`**: five new migrations (007–011) run on deploy, then `technologies` and `names`;
-  about 10 seconds of table rewrites. Push the branch and open a PR first so CI runs
-  the new browser job; `/code-review ultra` can review it.
-- **Spot-check** about 20 register reviews (Mon Oct 26): the 21 medium-confidence "listed" first, then a few "not
-  listed". Plus the names the agents flagged: two "Kraken" boards (the energy one is now "Kraken Technologies"),
-  "OSP Spain" vs "Otto Group one.O", "10x Team" vs "10x", Pear VC (a fund's board: its roles are at Wexler) and
-  NDEAVOUR CONSULTING (a recruiter).
 - Thu Oct 29: review the preview on a phone and a desktop.
 
 ## Next steps (in order)
 
-1. After the owner's go: push, PR, CI green, merge, deploy (`DEPLOY_HOST=<alias> deploy/deploy.sh`); check the
-   pages on the live preview; Lighthouse on a phone against production (target ≥ 95).
-2. The spot-check: corrections go back into `reviews/registers.jsonl` and `reviews/companies.jsonl` with
-   `reviewed_by: owner`, then load them (`cli.ts reviews`, `cli.ts names`).
-3. Boards that post for others beyond the 6 flagged: find more (staffing agencies, aggregators), and decide whether
+1. The owner's spot-check (2026-10-26) is written into `reviews/` (24 register reviews and 8 names confirmed,
+   Featherless renamed, Talan now "not listed"): load it on the server after the deploy
+   (`docker compose run --rm -T pipeline reviews reviews/registers.jsonl`; `deploy.sh` loads the names). Method for
+   later reviews: the register first; when unsure, the company's site (the board's logo links to it), then decide.
+2. Boards that post for others beyond the 6 flagged: find more (staffing agencies, aggregators), and decide whether
    their register answers should count at all.
-4. `docs/learning/` notes for the owner (Nuxt and Vue concepts as they appear in the code).
-5. Polish from the owner's Thursday review.
-6. Update this file and `progress.md`.
+3. `docs/learning/` notes for the owner (Nuxt and Vue concepts as they appear in the code).
+4. Polish from the owner's Thursday review.
+5. Update this file and `progress.md`.
 
 ## Open questions
 

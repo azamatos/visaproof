@@ -4,8 +4,9 @@ A public job finder for developers who need a visa to work in Europe: open roles
 boards, with an evidence-backed answer to "will they sponsor a visa, and will they help me relocate?" for each.
 Site: visaproof.azamatos.com (a `noindex` preview until the launch). Owner: Azamat Jorayev (azamatos). Applies to every agent tool; Claude Code also reads `CLAUDE.md`.
 
-**Status (2026-10-24):** the data pipeline runs on a server every 6 hours; the site has its search page, live as a
-preview. Current state and the next steps: `docs/memory-bank/activeContext.md`.
+**Status (2026-10-26):** the data pipeline runs on a server every 6 hours; the site (search, job, company and
+country pages, Method, Status) is live as a `noindex` preview. Current state and the next steps:
+`docs/memory-bank/activeContext.md`.
 
 ## Read first
 

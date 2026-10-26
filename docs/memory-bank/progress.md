@@ -1,6 +1,6 @@
 # Roadmap
 
-**Updated 2026-10-25.** Target: **MVP live on Friday 2026-10-30**. The design came early (2026-10-23) and the
+**Updated 2026-10-26.** Target: **MVP live on Friday 2026-10-30**. The design came early (2026-10-23) and the
 extractor clears the bar on the owner's subscription, so from Monday the site is built straight to the design.
 Public launch (sharing it) follows when the owner is happy with it.
 
@@ -11,7 +11,7 @@ Public launch (sharing it) follows when the owner is happy with it.
 | Fri Oct 23 | Done: alerts, labelled set, scorer, extractor, model choice (Opus 5.5), design brief                                                                                                                                 | Done: Telegram bot, Claude token, the name, the design                   |
 | Sat Oct 24 | Done: cron fixes, clearer Telegram messages, register review (200 employers), official amounts, language check, `role_answer`, the site's search page (live search, filters, themes), the preview deployed (noindex) | Done: design decisions, hosting confirmed, DNS record                    |
 | Sun Oct 25 | Done: the review's fixes (board dates, technology search, per-country "Can sponsor"), job page, Method, Status, company and country pages, company names, browser tests in CI, CSP, docs                             | Done: decided search matching, names, country pages, corrections address |
-| Mon Oct 26 | Merge and deploy after the owner's go; Lighthouse on production; load the spot-check corrections                                                                                                                     | Spot-check about 20 register reviews and the flagged names (15 minutes)  |
+| Mon Oct 26 | Done: code review (15 fixes), merged (PR #1) and deployed; Lighthouse on production 96–100. Next: spot-check corrections                                                                                             | Spot-check about 20 register reviews and the flagged names (15 minutes)  |
 | Tue Oct 27 | `docs/learning/` notes; more boards that post for others                                                                                                                                                             | —                                                                        |
 | Wed Oct 28 | Polish                                                                                                                                                                                                               | —                                                                        |
 | Thu Oct 29 | Fixes from the owner's review                                                                                                                                                                                        | Review the preview on a phone and a desktop                              |
@@ -27,7 +27,7 @@ Every deploy updates the preview at visaproof.azamatos.com; `noindex` stays unti
 | M0 Setup and real data                         | Oct 23   | done 2026-10-23                                                |
 | M1 Evidence: extraction, evaluation, registers | Oct 25   | done except the backfills (nightly) and the owner's spot-check |
 | M2 Design (owner, Claude Design)               | Oct 27   | done 2026-10-23; decisions 2026-10-24                          |
-| M3 Site                                        | Oct 30   | built 2026-10-25 on `site-week`; merge and deploy next         |
+| M3 Site                                        | Oct 30   | built 2026-10-25, deployed 2026-10-26 (preview, `noindex`)     |
 | M4 Launch                                      | November | when the owner is happy with the MVP                           |
 | M5 After launch                                | —        | later                                                          |
 
@@ -92,7 +92,7 @@ register status is confirmed for the top companies.
       (sidebar on a desktop, sheet on a phone), `/api/roles`
 - [x] Job page with the evidence panel and "Report a wrong answer"; company and country pages (full guides for
       Germany, the Netherlands and the UK); `/method`; `/status` with a stale notice on every page; a 404 page
-      (2026-10-25, branch `site-week`)
+      (2026-10-25, deployed 2026-10-26)
 - [x] Search: title word, company and technology (a dictionary of 119 with aliases), the board's posting date,
       per-country "Can sponsor"; state in the URL; 0.1 s instead of 1 s (2026-10-25)
 - [x] Company names for the 200 biggest boards that send none, reviewed by agents (2026-10-25)
@@ -100,10 +100,10 @@ register status is confirmed for the top companies.
 - [x] On the server in Docker behind its front door (`/srv/edge/sites/sponsored.caddy`), Cloudflare in front, a
       read-only database user: a preview is live at visaproof.azamatos.com with `noindex` (2026-10-24)
 - [x] Corrections go to `hi@azamatos.com` (owner, 2026-10-25; already routed, no DNS change)
-- [x] Playwright + axe in CI: 51 browser tests on a phone and a desktop, dark and light (2026-10-25; the CI job
-      hasn't run on GitHub yet)
-- [ ] Lighthouse ≥ 95 on a phone in production (local build: job page 96, search 92 with uncompressed HTML)
-- [ ] Merged and deployed
+- [x] Playwright + axe in CI: 51 browser tests on a phone and a desktop, dark and light (2026-10-25)
+- [x] Lighthouse ≥ 95 on a phone in production: performance 96–100 on search, a job, a company, Germany and
+      Status; accessibility 100 (2026-10-26)
+- [x] Merged (PR #1, after a code review: 15 fixes) and deployed (2026-10-26)
 
 Done when a visitor can find visa-friendly roles, see why each answer was given, and click through to apply.
 
@@ -148,4 +148,8 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
   "C#" and ".NET", "Can sponsor" per country, places that paired a city with the wrong country. Built: the
   technology dictionary, the job page with its evidence, Method, Status, company and country pages, a 404 page,
   reviewed names for the 200 biggest unnamed boards (6 post for others), browser tests with axe in CI, a content
-  security policy, API caching. The docs now describe what's built. All on branch `site-week`, waiting to merge.
+  security policy, API caching. The docs now describe what's built.
+- 2026-10-26: PR #1 reviewed (15 issues fixed: reviewed names that couldn't be corrected, a country code matched
+  inside "Île-de-France", stale-while-revalidate hiding the stale notice, status counting failed runs as on time,
+  company pages limited to 50 roles, and smaller ones), CI green, merged and deployed. Lighthouse on a phone in
+  production: performance 96–100, accessibility 100.
