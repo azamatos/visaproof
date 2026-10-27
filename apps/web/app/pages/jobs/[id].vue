@@ -75,9 +75,6 @@ usePageSeo({
     job.value
       ? `${job.value.title} at ${job.value.company.name}, ${job.value.place}: ${VISA_LABEL[job.value.visa].toLowerCase()}, with the evidence.`
       : undefined,
-  image: () => (job.value ? `jobs/${String(job.value.id)}` : undefined),
-  imageAlt: () =>
-    job.value ? `${job.value.title} at ${job.value.company.name}: ${VISA_LABEL[job.value.visa]}` : undefined,
   // A closed role stays reachable for links people kept, but isn't a search result.
   index: () => !!job.value && !job.value.closedAt,
   // "/jobs/01" is "/jobs/1"

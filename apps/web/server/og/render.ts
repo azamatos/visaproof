@@ -1,42 +1,37 @@
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
-import { VISA_LABEL, type VisaState } from "#shared/answers";
-import { SITE_NAME } from "#shared/seo";
+import type { RoleCard } from "#shared/answers";
 
-// Share images (1200×630) for link previews: the site's dark theme, its fonts and its visa chips, drawn by Satori
-// into SVG and by resvg into PNG. The fonts ship with the server (server/assets/fonts, OFL). Kept out of
-// server/utils so these short names aren't auto-imported everywhere.
+// The share image (1200×630) every page links to: the owner's design (Claude Design, 2026-10-27), drawn by Satori
+// into SVG and by resvg into PNG, with the live numbers and the three newest roles that sponsor a visa. The fonts
+// ship with the server (server/assets/fonts, OFL). Kept out of server/utils so these short names aren't
+// auto-imported everywhere.
 
 type Style = Record<string, string | number>;
 export type Node = { type: string; props: { style?: Style; children?: Child; [k: string]: unknown } };
 type Child = Node | string | (Node | string | null | false)[] | null;
 
-export const h = (
-  type: string,
-  style: Style,
-  children?: Child,
-  props: Record<string, unknown> = {},
-): Node => ({
+const h = (type: string, style: Style, children?: Child, props: Record<string, unknown> = {}): Node => ({
   type,
   props: { style, children, ...props },
 });
+// An SVG shape: attributes only.
+const shape = (type: string, props: Record<string, unknown>): Node => ({ type, props });
 
 const C = {
   bg: "#010101",
   fg: "#ffffff",
   fg2: "#a6a6a6",
-  muted: "rgba(255, 255, 255, 0.5)",
-  line: "rgba(255, 255, 255, 0.18)",
+  muted: "#8a8f98",
   accent: "#76beff",
-  accentTint: "#0f181f",
-  accentLine: "#365673",
-  unknownLine: "rgba(255, 255, 255, 0.32)",
-  refuse: "#f99f5d",
-  refuseTint: "#1f140c",
-  refuseLine: "#71482a",
+  onAccent: "#04111f",
+  chip: "#e6e6e6",
+  refuse: "#f0a05a",
+  can: "#d9d9d9",
 };
+const MONO = "Space Mono";
 
-let fonts: Promise<{ name: string; data: Buffer; weight: 400 | 500; style: "normal" }[]> | undefined;
+let fonts: Promise<{ name: string; data: Buffer; weight: 400 | 500 | 600; style: "normal" }[]> | undefined;
 // A load that failed is tried again on the next image, not kept.
 const loadFonts = () =>
   (fonts ??= Promise.all(
@@ -44,7 +39,8 @@ const loadFonts = () =>
       [
         ["Geist", "Geist-Regular.ttf", 400],
         ["Geist", "Geist-Medium.ttf", 500],
-        ["Space Mono", "SpaceMono-Regular.woff", 400],
+        ["Geist", "Geist-SemiBold.ttf", 600],
+        [MONO, "SpaceMono-Regular.woff", 400],
       ] as const
     ).map(async ([name, file, weight]) => {
       const data = await useStorage("assets:server").getItemRaw<Buffer>(`fonts/${file}`);
@@ -56,116 +52,297 @@ const loadFonts = () =>
     throw e;
   }));
 
-// The site's mark: the favicon's arrow and bar.
-const mark = h(
-  "svg",
-  { width: 44, height: 44 },
-  [
-    h("rect", {}, null, { width: 32, height: 32, rx: 7, fill: "#1a1a1a" }),
-    h("path", {}, null, {
-      d: "M7 16h11M14 10.5 19.5 16 14 21.5",
+const svg = (size: number, viewBox: string, children: Node[]) =>
+  h("svg", { display: "block", flexShrink: 0 }, children, { width: size, height: size, viewBox });
+
+const ICON = {
+  check: (color: string) =>
+    svg(16, "0 0 24 24", [
+      shape("circle", { cx: 12, cy: 12, r: 9, fill: "none", stroke: color, "stroke-width": 2.2 }),
+      shape("path", {
+        d: "M8 12.3l2.7 2.7L16 9.7",
+        fill: "none",
+        stroke: color,
+        "stroke-width": 2.2,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      }),
+    ]),
+  box: svg(16, "0 0 24 24", [
+    shape("path", {
+      d: "M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z M4 8.5 12 13l8-4.5 M12 13v7",
+      fill: "none",
+      stroke: C.chip,
+      "stroke-width": 1.9,
+      "stroke-linejoin": "round",
+    }),
+  ]),
+  globe: svg(15, "0 0 24 24", [
+    shape("circle", { cx: 12, cy: 12, r: 9, fill: "none", stroke: C.fg2, "stroke-width": 1.9 }),
+    shape("path", {
+      d: "M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3z",
+      fill: "none",
+      stroke: C.fg2,
+      "stroke-width": 1.9,
+    }),
+  ]),
+  arrow: svg(26, "0 0 32 32", [
+    shape("path", {
+      d: "M5 16h19M17 9l7 7-7 7",
       fill: "none",
       stroke: C.accent,
-      "stroke-width": 2.6,
+      "stroke-width": 3.2,
       "stroke-linecap": "round",
       "stroke-linejoin": "round",
     }),
-    h("rect", {}, null, { x: 22, y: 10, width: 4, height: 12, fill: C.accent }),
-  ],
-  { viewBox: "0 0 32 32" },
-);
-
-// The visa chip as on the site: round chips quote the posting, the square one comes from the law or a register,
-// dashed means nobody says yet.
-const CHIP: Record<VisaState, Style> = {
-  sponsors: { backgroundColor: C.accent, color: C.bg, borderColor: C.accent, borderRadius: 30 },
-  may: { backgroundColor: C.accentTint, color: C.accent, borderColor: C.accentLine, borderRadius: 30 },
-  can: { color: C.fg, borderColor: C.accentLine, borderRadius: 7 },
-  unknown: { color: C.fg2, borderColor: C.unknownLine, borderStyle: "dashed", borderRadius: 30 },
-  wont: { backgroundColor: C.refuseTint, color: C.refuse, borderColor: C.refuseLine, borderRadius: 30 },
+  ]),
+  // The owner's mark, as on azamatos.com
+  azamatos: svg(34, "0 0 32 32", [
+    shape("rect", { width: 32, height: 32, rx: 7, fill: C.bg }),
+    shape("path", {
+      fill: "#f0f4f3",
+      stroke: "#f0f4f3",
+      "stroke-width": 44,
+      "stroke-linejoin": "round",
+      transform: "translate(6.06 22.5) scale(.02 -.02)",
+      d: "M279 -14Q214 -14 161.5 15.5Q109 45 78 101.5Q47 158 47 240L47 256Q47 337 78 394Q109 451 161.5 480.5Q214 510 277 510Q328 510 369.5 487.5Q411 465 435 418L447 418L447 496L525 496L525 102Q525 72 552 72L577 72L577 0L524 0Q493 0 470 20Q447 40 447 84L435 84Q411 35 368.5 10.5Q326 -14 279 -14ZM287 60Q357 60 402 110Q447 160 447 242L447 254Q447 307 426 348Q405 389 369 412.5Q333 436 287 436Q241 436 205 413.5Q169 391 148 350.5Q127 310 127 256L127 240Q127 156 172 108Q217 60 287 60Z",
+    }),
+    shape("rect", { x: 19, y: 9, width: 6, height: 14, fill: "#68edc0" }),
+  ]),
 };
 
-export const visaChip = (state: VisaState, label = VISA_LABEL[state]) =>
+const chip = (style: Style, icon: Node, label: string) =>
   h(
     "div",
     {
       display: "flex",
       alignItems: "center",
-      height: 56,
-      padding: "0 24px",
-      borderWidth: 2,
-      borderStyle: "solid",
-      fontSize: 27,
-      fontWeight: 500,
-      ...CHIP[state],
+      gap: 7,
+      height: 32,
+      padding: "0 13px 0 10px",
+      borderRadius: 999,
+      fontSize: 15,
+      whiteSpace: "nowrap",
+      ...style,
     },
-    label,
+    [icon, label],
   );
 
-export const plainChip = (label: string) =>
-  h(
-    "div",
-    {
-      display: "flex",
-      alignItems: "center",
-      height: 56,
-      padding: "0 24px",
-      border: `2px solid ${C.line}`,
-      borderRadius: 30,
-      color: C.fg2,
-      fontSize: 27,
-      fontWeight: 500,
-    },
-    label,
-  );
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-// One card: an eyebrow line, the headline (up to three lines), a line of facts and the chips.
-export function card(c: { eyebrow?: string; title: string; facts?: string; chips?: Node[] }): Node {
-  // Smaller type for longer titles, so three lines still leave room around them.
-  const size = c.title.length > 60 ? 50 : c.title.length > 32 ? 58 : 66;
+// One role as its card on the site: title and age, where, and its answers.
+function role(r: RoleCard, first: boolean): Node {
+  const language = !r.languages
+    ? null
+    : r.languages.length
+      ? `${r.languages.map(capital).join(", ")} required`
+      : "English only";
   return h(
     "div",
     {
-      width: 1200,
-      height: 630,
-      // Satori adds padding outside the size otherwise: the text would run off the right edge.
-      boxSizing: "border-box",
       display: "flex",
       flexDirection: "column",
-      justifyContent: "space-between",
-      padding: "60px 72px",
+      gap: 11,
+      padding: "19px 22px",
+      border: `1px solid ${first ? "rgba(118, 190, 255, 0.55)" : "rgba(255, 255, 255, 0.12)"}`,
+      borderRadius: 18,
+      backgroundColor: first ? "#0c1118" : "#0b0c0e",
+    },
+    [
+      h("div", { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }, [
+        h(
+          "div",
+          {
+            fontSize: 23,
+            fontWeight: 500,
+            letterSpacing: -0.575,
+            color: C.fg,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            flexShrink: 1,
+          },
+          r.title,
+        ),
+        h(
+          "div",
+          { fontFamily: MONO, fontSize: 13, color: C.muted, whiteSpace: "nowrap", flexShrink: 0 },
+          r.posted,
+        ),
+      ]),
+      h(
+        "div",
+        { fontSize: 17, color: C.fg2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+        [r.company, r.place, r.workMode].filter(Boolean).join(" · "),
+      ),
+      h("div", { display: "flex", alignItems: "center", gap: 8 }, [
+        chip(
+          { backgroundColor: C.accent, color: C.onAccent, fontWeight: 600 },
+          ICON.check(C.onAccent),
+          "Sponsors visa",
+        ),
+        r.relocation === "helps"
+          ? chip(
+              { border: "1px solid rgba(255, 255, 255, 0.28)", color: C.chip, fontWeight: 500 },
+              ICON.box,
+              "Helps you move",
+            )
+          : null,
+        language
+          ? h(
+              "div",
+              {
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                marginLeft: 6,
+                fontFamily: MONO,
+                fontSize: 13,
+                color: C.fg2,
+                whiteSpace: "nowrap",
+              },
+              [ICON.globe, language],
+            )
+          : null,
+      ]),
+    ],
+  );
+}
+
+const dot = (fill: string, border: string, label: string) =>
+  h("div", { display: "flex", alignItems: "center", gap: 7 }, [
+    h("div", {
+      width: 11,
+      height: 11,
+      borderRadius: 999,
+      backgroundColor: fill,
+      border: `2px solid ${border}`,
+      boxSizing: "border-box",
+    }),
+    label,
+  ]);
+
+// The site's share image: the pitch with the live numbers on the left, the newest roles that sponsor on the right.
+export function siteImage(facts: string, roles: RoleCard[]): Node {
+  return h(
+    "div",
+    {
+      display: "flex",
+      position: "relative",
+      width: 1200,
+      height: 630,
+      overflow: "hidden",
       backgroundColor: C.bg,
       color: C.fg,
       fontFamily: "Geist",
     },
     [
-      h("div", { display: "flex", alignItems: "center", gap: 16 }, [
-        mark,
-        h("div", { fontSize: 32, fontWeight: 500, letterSpacing: -0.5 }, SITE_NAME),
-      ]),
-      h("div", { display: "flex", flexDirection: "column", gap: 18 }, [
-        c.eyebrow ? h("div", { fontSize: 30, color: C.fg2, lineClamp: 1 }, c.eyebrow) : null,
-        h(
-          "div",
-          {
-            display: "block",
-            fontSize: size,
-            fontWeight: 500,
-            lineHeight: 1.12,
-            letterSpacing: -1,
-            lineClamp: 3,
-          },
-          c.title,
-        ),
-        c.facts ? h("div", { fontSize: 30, color: C.fg2, lineClamp: 1 }, c.facts) : null,
-        c.chips?.length
-          ? h("div", { display: "flex", flexWrap: "wrap", gap: 14, marginTop: 6 }, c.chips)
-          : null,
-      ]),
-      h("div", { display: "flex", justifyContent: "space-between", fontSize: 24, color: C.muted }, [
-        h("div", { fontFamily: "Space Mono" }, "visaproof.azamatos.com"),
-        h("div", {}, "Every answer with its evidence"),
-      ]),
+      h(
+        "div",
+        {
+          position: "absolute",
+          left: 604,
+          top: 122,
+          width: 532,
+          height: 458,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        },
+        roles.slice(0, 3).map((r, i) => role(r, i === 0)),
+      ),
+      h(
+        "div",
+        {
+          position: "absolute",
+          left: 64,
+          top: 50,
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          fontFamily: MONO,
+          fontSize: 28,
+          lineHeight: 1,
+          letterSpacing: -0.28,
+        },
+        [
+          ICON.arrow,
+          h("div", { color: C.muted }, "~"),
+          h("div", { color: C.fg }, "visaproof.azamatos"),
+          h("div", { width: 16, height: 32, marginLeft: -10, backgroundColor: C.accent }),
+        ],
+      ),
+      h(
+        "div",
+        {
+          position: "absolute",
+          right: 64,
+          top: 47,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          fontFamily: MONO,
+          fontSize: 17,
+          color: C.fg2,
+        },
+        [
+          h("div", { display: "flex", borderRadius: 8, boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.2)" }, [
+            ICON.azamatos,
+          ]),
+          "azamatos.com",
+        ],
+      ),
+      h(
+        "div",
+        {
+          position: "absolute",
+          left: 64,
+          top: 150,
+          width: 496,
+          display: "flex",
+          flexDirection: "column",
+          gap: 22,
+        },
+        [
+          h(
+            "div",
+            {
+              fontFamily: MONO,
+              fontSize: 16,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              color: C.accent,
+            },
+            "For relocating developers",
+          ),
+          h(
+            "div",
+            { fontSize: 58, fontWeight: 600, lineHeight: 1.02, letterSpacing: -2.61, color: C.fg },
+            "Developer jobs in Europe, visa answer first.",
+          ),
+          h("div", { fontSize: 24, lineHeight: 1.38, letterSpacing: -0.36, color: C.fg2 }, facts),
+        ],
+      ),
+      h(
+        "div",
+        {
+          position: "absolute",
+          left: 64,
+          bottom: 50,
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          fontFamily: MONO,
+          fontSize: 16,
+          color: C.fg2,
+        },
+        [
+          dot(C.accent, C.accent, "sponsors"),
+          dot("transparent", C.accent, "may"),
+          dot("transparent", C.can, "can"),
+          dot(C.refuse, C.refuse, "won’t"),
+        ],
+      ),
     ],
   );
 }

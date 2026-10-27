@@ -47,7 +47,6 @@ usePageSeo({
     country.value
       ? `${n(country.value.open)} developer roles in ${country.value.name}${guide.value ? `, and how developers get a work permit there (${guide.value.route})` : ""}.`
       : undefined,
-  image: () => `countries/${code.value.toLowerCase()}`,
   // As the sitemap lists it: a country with open roles.
   index: () => !!country.value?.open,
   path: () => `/countries/${code.value.toLowerCase()}`,
