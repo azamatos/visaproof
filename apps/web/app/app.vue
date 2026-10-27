@@ -1,9 +1,8 @@
 <script setup lang="ts">
+import { SITE_NAME, SITE_TITLE } from "#shared/seo";
+
 useTheme();
-useHead({
-  titleTemplate: (title) =>
-    title ? `${title} · Visaproof` : "Visaproof: developer jobs in Europe, visa answer first",
-});
+useHead({ titleTemplate: (title) => (title ? `${title} · ${SITE_NAME}` : SITE_TITLE) });
 </script>
 
 <template>

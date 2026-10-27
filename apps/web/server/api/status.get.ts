@@ -16,9 +16,7 @@ const REASON = `case
 
 export default defineEventHandler(async () => {
   const sql = db();
-  // A run that worked: it didn't fail outright, read at least one board, found at least one board.
-  const worked = sql`finished_at is not null and not (stats ? 'error') and coalesce((stats->>'ok')::int, 1) > 0
-    and not (kind = 'discover' and coalesce((stats->>'slugs')::int, 0) = 0)`;
+  const worked = workedRun();
   const [runs, failures, [open], [registers], [reading], [known]] = await Promise.all([
     sql<RunRow[]>`
       select distinct on (kind) kind, finished_at, stats from run

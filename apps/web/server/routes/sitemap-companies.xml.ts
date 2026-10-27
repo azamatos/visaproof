@@ -3,6 +3,7 @@ import { urlset } from "#shared/seo";
 
 // Every board with an open role, once (Lever's EU and US boards share a slug and a page).
 export default defineEventHandler(async (event) => {
+  assertMethod(event, "GET", true);
   const url = siteUrl(event);
   const rows = await db()<{ ats: string; slug: string; lastmod: Date }[]>`
     select c.ats, c.slug, max(coalesce(p.changed_at, p.first_seen_at)) as lastmod

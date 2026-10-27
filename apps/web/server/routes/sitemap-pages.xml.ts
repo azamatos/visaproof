@@ -3,6 +3,7 @@ import { urlset } from "#shared/seo";
 
 // Search, the countries that have open roles, and the pages about the site.
 export default defineEventHandler(async (event) => {
+  assertMethod(event, "GET", true);
   const url = siteUrl(event);
   const [at, countries] = await Promise.all([
     lastRead(),

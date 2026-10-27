@@ -22,7 +22,7 @@
   Indexing is on since 2026-10-27 (`deploy/compose.yml`). No JobPosting markup: Google wants the posting's full
   text in it, and we don't republish postings.
 - **Tests:** pipeline unit tests (65), site unit tests (23), browser tests with Playwright and axe on a phone and a
-  desktop (59, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
+  desktop (65, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
 - **Lighthouse on a phone, production** (2026-10-26): performance search 100, job 98, company 96, Germany 99,
   Status 97; accessibility 100; SEO 63 is the intended `noindex`. Best practices 96 only because this Mac's DNS
   blocks Cloudflare's analytics script (a console error in the test, not on a visitor's phone).

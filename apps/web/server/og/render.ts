@@ -1,6 +1,7 @@
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 import { VISA_LABEL, type VisaState } from "#shared/answers";
+import { SITE_NAME } from "#shared/seo";
 
 // Share images (1200×630) for link previews: the site's dark theme, its fonts and its visa chips, drawn by Satori
 // into SVG and by resvg into PNG. The fonts ship with the server (server/assets/fonts, OFL). Kept out of
@@ -36,6 +37,7 @@ const C = {
 };
 
 let fonts: Promise<{ name: string; data: Buffer; weight: 400 | 500; style: "normal" }[]> | undefined;
+// A load that failed is tried again on the next image, not kept.
 const loadFonts = () =>
   (fonts ??= Promise.all(
     (
@@ -49,7 +51,10 @@ const loadFonts = () =>
       if (!data) throw new Error(`font missing: ${file}`);
       return { name, data: Buffer.from(data), weight, style: "normal" as const };
     }),
-  ));
+  ).catch((e: unknown) => {
+    fonts = undefined;
+    throw e;
+  }));
 
 // The site's mark: the favicon's arrow and bar.
 const mark = h(
@@ -136,7 +141,7 @@ export function card(c: { eyebrow?: string; title: string; facts?: string; chips
     [
       h("div", { display: "flex", alignItems: "center", gap: 16 }, [
         mark,
-        h("div", { fontSize: 32, fontWeight: 500, letterSpacing: -0.5 }, "Visaproof"),
+        h("div", { fontSize: 32, fontWeight: 500, letterSpacing: -0.5 }, SITE_NAME),
       ]),
       h("div", { display: "flex", flexDirection: "column", gap: 18 }, [
         c.eyebrow ? h("div", { fontSize: 30, color: C.fg2, lineClamp: 1 }, c.eyebrow) : null,
@@ -153,7 +158,9 @@ export function card(c: { eyebrow?: string; title: string; facts?: string; chips
           c.title,
         ),
         c.facts ? h("div", { fontSize: 30, color: C.fg2, lineClamp: 1 }, c.facts) : null,
-        c.chips?.length ? h("div", { display: "flex", gap: 14, marginTop: 6 }, c.chips) : null,
+        c.chips?.length
+          ? h("div", { display: "flex", flexWrap: "wrap", gap: 14, marginTop: 6 }, c.chips)
+          : null,
       ]),
       h("div", { display: "flex", justifyContent: "space-between", fontSize: 24, color: C.muted }, [
         h("div", { fontFamily: "Space Mono" }, "visaproof.azamatos.com"),

@@ -2,6 +2,7 @@ import { urlset } from "#shared/seo";
 
 // Every open role. About 15,000: well under a sitemap's 50,000.
 export default defineEventHandler(async (event) => {
+  assertMethod(event, "GET", true);
   const url = siteUrl(event);
   const rows = await db()<{ id: number; lastmod: Date }[]>`
     select id::int as id, coalesce(changed_at, first_seen_at) as lastmod from posting

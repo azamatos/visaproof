@@ -1,4 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
+import { SITE_NAME } from "./shared/seo";
 
 // Visaproof's site: server-rendered pages that read the pipeline's Postgres (NUXT_DATABASE_URL).
 export default defineNuxtConfig({
@@ -21,9 +22,7 @@ export default defineNuxtConfig({
       meta: [
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         { name: "color-scheme", content: "dark light" },
-        { name: "theme-color", content: "#010101", media: "(prefers-color-scheme: dark)" },
-        { name: "theme-color", content: "#f7f7f5", media: "(prefers-color-scheme: light)" },
-        { property: "og:site_name", content: "Visaproof" },
+        { property: "og:site_name", content: SITE_NAME },
         { property: "og:type", content: "website" },
         { property: "og:locale", content: "en_GB" },
         // X still needs this for the large share image (unhead's typed field for it is deprecated)

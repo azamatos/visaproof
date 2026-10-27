@@ -16,9 +16,10 @@ const {
   lazy: import.meta.client,
 });
 const notFound = computed(() => error.value?.statusCode === 404);
-if (import.meta.server && notFound.value) {
+// Any other failure is passing: 503 asks crawlers to come back rather than drop the page.
+if (import.meta.server && error.value) {
   const event = useRequestEvent();
-  if (event) setResponseStatus(event, 404);
+  if (event) setResponseStatus(event, notFound.value ? 404 : 503);
 }
 const guide = computed(() => GUIDES[code.value]);
 const n = (x: number) => x.toLocaleString("en-US");
@@ -47,7 +48,9 @@ usePageSeo({
       ? `${n(country.value.open)} developer roles in ${country.value.name}${guide.value ? `, and how developers get a work permit there (${guide.value.route})` : ""}.`
       : undefined,
   image: () => `countries/${code.value.toLowerCase()}`,
-  index: () => !!country.value,
+  // As the sitemap lists it: a country with open roles.
+  index: () => !!country.value?.open,
+  path: () => `/countries/${code.value.toLowerCase()}`,
 });
 </script>
 

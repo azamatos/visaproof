@@ -17,9 +17,10 @@ const {
   lazy: import.meta.client,
 });
 const notFound = computed(() => error.value?.statusCode === 404);
-if (import.meta.server && notFound.value) {
+// Any other failure is passing: 503 asks crawlers to come back rather than drop the page.
+if (import.meta.server && error.value) {
   const event = useRequestEvent();
-  if (event) setResponseStatus(event, 404);
+  if (event) setResponseStatus(event, notFound.value ? 404 : 503);
 }
 
 const answers = computed(() => (job.value ? evidence(job.value) : null));
@@ -74,11 +75,13 @@ usePageSeo({
     job.value
       ? `${job.value.title} at ${job.value.company.name}, ${job.value.place}: ${VISA_LABEL[job.value.visa].toLowerCase()}, with the evidence.`
       : undefined,
-  image: () => `jobs/${String(route.params.id)}`,
+  image: () => (job.value ? `jobs/${String(job.value.id)}` : undefined),
   imageAlt: () =>
     job.value ? `${job.value.title} at ${job.value.company.name}: ${VISA_LABEL[job.value.visa]}` : undefined,
   // A closed role stays reachable for links people kept, but isn't a search result.
   index: () => !!job.value && !job.value.closedAt,
+  // "/jobs/01" is "/jobs/1"
+  path: () => (job.value ? `/jobs/${String(job.value.id)}` : undefined),
 });
 </script>
 

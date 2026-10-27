@@ -41,7 +41,8 @@ serves it at `visaproof.azamatos.com` from `deploy/caddy/sponsored.caddy`, which
 Caddy accepts the whole configuration with it. Cloudflare proxies the domain (DNS: an `A` record, proxied; SSL/TLS
 mode Full (strict)); Caddy gets the certificate itself. Search engines may index the site since
 2026-10-27: `NUXT_PUBLIC_INDEXABLE` in `compose.yml` (`INDEXABLE=false` in `.env` turns it off) sets the robots
-header, the meta tags and robots.txt together.
+header, the meta tags and robots.txt together (static files, such as icons and scripts, get no header either
+way).
 
 ## Alerts
 
