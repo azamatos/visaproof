@@ -34,12 +34,16 @@ const shown = computed(() => {
 });
 const pageLink = (to: number) => ({ query: to > 1 ? { page: String(to) } : {}, hash: "#roles-title" });
 
-useSeoMeta({
+const boardPath = computed(() => path.value.replace(/^\/api\/companies\//, ""));
+usePageSeo({
   title: () => company.value?.name ?? (notFound.value ? "Company not found" : "Company"),
   description: () =>
     company.value
       ? `${company.value.name}: ${String(company.value.open)} open developer roles in Europe, and whether it can hire on a visa.`
       : undefined,
+  image: () => `companies/${boardPath.value}`,
+  index: () => !!company.value?.open,
+  path: () => `/companies/${boardPath.value}${page.value > 1 ? `?page=${String(page.value)}` : ""}`,
 });
 </script>
 

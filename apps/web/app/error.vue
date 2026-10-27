@@ -8,6 +8,7 @@ const path = useRoute().path;
 
 useTheme();
 useHead({ title: missing.value ? "Page not found · Visaproof" : "Something broke · Visaproof" });
+useSeoMeta({ robots: "noindex" });
 </script>
 
 <template>
