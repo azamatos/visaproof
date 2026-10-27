@@ -13,7 +13,7 @@ describe("robots", () => {
     expect(robotsMeta(true, false)).toBe("noindex, follow");
     expect(robotsHeader(true, "/jobs/1")).toBeNull();
     expect(robotsHeader(true, "/api/roles")).toBe("noindex");
-    expect(robotsHeader(true, "/og/jobs/1.png")).toBe("noindex");
+    expect(robotsHeader(true, "/og/site.png")).toBe("noindex");
     expect(robotsTxt(true, "https://visaproof.azamatos.com")).toBe(
       "# Visaproof: developer jobs in Europe, visa answer first.\nUser-agent: *\nDisallow: /api/\n\nSitemap: https://visaproof.azamatos.com/sitemap.xml\n",
     );

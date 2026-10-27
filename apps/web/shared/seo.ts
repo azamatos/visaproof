@@ -4,6 +4,8 @@
 
 export const SITE_NAME = "Visaproof";
 export const SITE_TITLE = "Visaproof: developer jobs in Europe, visa answer first";
+export const SHARE_IMAGE_ALT =
+  "Visaproof: developer jobs in Europe, visa answer first. The newest roles marked Sponsors visa.";
 
 // The robots meta tag of a page. A page not worth a search result (a closed role, a search with filters, a 404)
 // still lets crawlers follow its links.

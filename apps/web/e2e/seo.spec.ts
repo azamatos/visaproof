@@ -18,31 +18,32 @@ test("with indexing off, keeps every page out of search results", async ({ page,
   expect(robots).not.toContain("Sitemap:");
 });
 
-test("gives a role its canonical link and its own share image", async ({ page, request }) => {
+test("gives a role its canonical link, and every page the site's share image", async ({ page, request }) => {
   await page.goto("/jobs/1");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${SITE}/jobs/1`);
   await expect(meta(page, "og:title")).toHaveAttribute(
     "content",
     "Senior Backend Engineer (Go) at Fjord Systems",
   );
-  await expect(meta(page, "og:image")).toHaveAttribute("content", `${SITE}/og/jobs/1.png`);
+  await expect(meta(page, "og:image")).toHaveAttribute("content", `${SITE}/og/site.png`);
   await expect(meta(page, "twitter:card")).toHaveAttribute("content", "summary_large_image");
 
-  for (const path of [
-    "/og/jobs/1.png",
-    "/og/site.png",
-    "/og/companies/greenhouse/northwind.png",
-    "/og/countries/de.png",
-  ]) {
-    const image = await request.get(path);
-    expect(image.status(), path).toBe(200);
-    expect(image.headers()["content-type"]).toBe("image/png");
-    expect(pngSize(await image.body())).toEqual({ width: 1200, height: 630 });
-  }
-  expect((await request.get("/og/jobs/99999.png")).status()).toBe(404);
-  expect((await request.get("/og/countries/zz.png")).status()).toBe(404);
-  // Only a board: no way out of the companies' API
-  expect((await request.get("/og/companies/%2e%2e/%2e%2e/status.png")).status()).toBe(404);
+  const image = await request.get("/og/site.png");
+  expect(image.status()).toBe(200);
+  expect(image.headers()["content-type"]).toBe("image/png");
+  expect(pngSize(await image.body())).toEqual({ width: 1200, height: 630 });
+  expect((await request.get("/og/jobs/1.png")).status()).toBe(404);
+});
+
+test("serves the icons and the web app manifest", async ({ page, request }) => {
+  await page.goto("/");
+  for (const rel of ["icon", "apple-touch-icon", "manifest"])
+    for (const href of await page
+      .locator(`link[rel="${rel}"]`)
+      .evaluateAll((ls) => ls.map((l) => l.getAttribute("href") ?? "")))
+      expect((await request.get(href)).status(), href).toBe(200);
+  const manifest = (await (await request.get("/site.webmanifest")).json()) as { name: string };
+  expect(manifest.name).toBe("Visaproof");
 });
 
 test("gives one canonical link to each page, however it's spelled", async ({ page }) => {
@@ -50,7 +51,6 @@ test("gives one canonical link to each page, however it's spelled", async ({ pag
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${SITE}/countries/de`);
   await page.goto("/jobs/01");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${SITE}/jobs/1`);
-  await expect(meta(page, "og:image")).toHaveAttribute("content", `${SITE}/og/jobs/1.png`);
 });
 
 test("answers HEAD for robots.txt, the sitemaps and the share images", async ({ request }) => {

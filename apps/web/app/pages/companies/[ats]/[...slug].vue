@@ -42,7 +42,6 @@ usePageSeo({
     company.value
       ? `${company.value.name}: ${String(company.value.open)} open developer ${company.value.open === 1 ? "role" : "roles"} in Europe, and whether it can hire on a visa.`
       : undefined,
-  image: () => `companies/${boardPath.value}`,
   // As the sitemap lists it: a company with open roles, on a page that has some of them.
   index: () => !!company.value?.open && page.value <= company.value.pages,
   path: () => `/companies/${boardPath.value}${page.value > 1 ? `?page=${String(page.value)}` : ""}`,
