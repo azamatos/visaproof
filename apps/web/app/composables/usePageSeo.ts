@@ -26,7 +26,8 @@ export function usePageSeo(seo: {
       const share = toValue(seo.sharePath);
       return share ? siteUrl + share : url.value;
     },
-    ogImage: `${siteUrl}/og/site.png`,
+    // A new address each day: link previews keep an image for days, and this one shows the day's numbers and roles
+    ogImage: `${siteUrl}/og/site.png?d=${new Date().toISOString().slice(0, 10)}`,
     ogImageWidth: 1200,
     ogImageHeight: 630,
     ogImageType: "image/png",

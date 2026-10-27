@@ -8,7 +8,9 @@ import { png, siteImage } from "../../og/render";
 
 type Search = { roles: RoleCard[] };
 const HOUR = 60 * 60 * 1000;
+// The image being drawn or last drawn, and the last one that worked: a redraw that fails keeps the older image.
 let drawn: { at: number; png: Promise<Buffer> } | undefined;
+let good: Buffer | undefined;
 
 const n = (x: number) => x.toLocaleString("en-US");
 
@@ -17,7 +19,7 @@ async function draw(): Promise<Buffer> {
     $fetch<Stats>("/api/stats"),
     $fetch<Search>("/api/roles", { query: { visa: "sponsors", sort: "newest" } }),
   ]);
-  // The newest roles that sponsor, one per company
+  // The newest roles that sponsor, one per company: three fit
   const roles = search.roles
     .filter((r, i, all) => all.findIndex((x) => x.company === r.company) === i)
     .slice(0, 3);
@@ -27,15 +29,17 @@ async function draw(): Promise<Buffer> {
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, "GET", true);
-  if (!drawn || Date.now() - drawn.at > HOUR) {
-    const entry = { at: Date.now(), png: draw() };
-    // A failure isn't kept: the next request tries again.
-    entry.png.catch(() => {
-      if (drawn === entry) drawn = undefined;
-    });
-    drawn = entry;
+  if (!drawn || Date.now() - drawn.at > HOUR) drawn = { at: Date.now(), png: draw() };
+  let image: Buffer;
+  try {
+    image = await drawn.png;
+    good = image;
+  } catch (e) {
+    // Try again on the next request; meanwhile the last good image, if there is one
+    drawn = undefined;
+    if (!good) throw e;
+    image = good;
   }
-  const image = await drawn.png;
   setResponseHeaders(event, { "content-type": "image/png", "cache-control": "public, max-age=3600" });
   return image;
 });

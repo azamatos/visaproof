@@ -93,8 +93,9 @@ try {
       await digest(args[0]);
       break;
     case "channel": {
-      const lang = (opt("lang") ?? "en") as Lang;
-      if (!LANGS.includes(lang)) throw new Error(`channel --lang takes ${LANGS.join(" or ")}`);
+      const lang = (args.includes("--lang") ? opt("lang") : "en") as Lang;
+      if (!LANGS.includes(lang) || args.some((a) => !["--dry", "--lang", lang].includes(a)))
+        throw new Error(`usage: node src/cli.ts channel [--lang ${LANGS.join("|")}] [--dry]`);
       await channel(lang, args.includes("--dry"));
       break;
     }

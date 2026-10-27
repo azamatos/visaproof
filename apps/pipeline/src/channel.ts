@@ -76,13 +76,25 @@ const ISO: Record<string, string> = {
   turkish: "tr",
   ukrainian: "uk",
   russian: "ru",
+  albanian: "sq",
+  macedonian: "mk",
+  flemish: "nl-BE",
+  "swiss german": "gsw",
+  arabic: "ar",
+  hebrew: "he",
+  chinese: "zh",
+  japanese: "ja",
+  korean: "ko",
+  hindi: "hi",
 };
 const RU_LANGUAGE = new Intl.DisplayNames(["ru"], { type: "language" });
 const RU_PLURAL = new Intl.PluralRules("ru");
+// Numbers as Russian writes them: 1 234, not 1,234 (a comma is the decimal point there)
+const ruN = (k: number) => k.toLocaleString("ru-RU");
 // 1 вакансия, 2 вакансии, 5 вакансий
 const ru = (k: number, one: string, few: string, many: string) => {
   const form = RU_PLURAL.select(k);
-  return `${n(k)} ${form === "one" ? one : form === "few" ? few : many}`;
+  return `${ruN(k)} ${form === "one" ? one : form === "few" ? few : many}`;
 };
 const day = (locale: string) =>
   new Intl.DateTimeFormat(locale, { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" });
@@ -152,18 +164,21 @@ const WORDS: Record<Lang, Words> = {
     anywhere: { icon: "🌍", name: "Удалённо, откуда угодно", tag: "#УдалённоОткудаУгодно" },
     europe: { icon: "🇪🇺", name: "Удалённо по Европе", tag: "#УдалённоПоЕвропе" },
     several: "Несколько стран",
+    // The countries only, as the site counts them (more than two: "3 страны"); the role's page has the cities
     severalPlace: (r) => {
       const names = r.countries.map((c) => WORDS.ru.country.of(c) ?? c);
-      const where = names.length > 3 ? ru(names.length, "страна", "страны", "стран") : names.join(" или ");
-      return [r.remote === "countries" ? "удалённо" : r.city, where].filter(Boolean).join(", ");
+      const where = names.length > 2 ? ru(names.length, "страна", "страны", "стран") : names.join(" или ");
+      return [r.remote === "countries" ? "удалённо" : "", where].filter(Boolean).join(", ");
     },
+    // The site's "€70,000–90,000 a year", as Russian writes it. The site's words are in apps/web/shared/format.ts (PER).
     salary: (s) =>
       s
+        .replace(/(\d),(?=\d{3})/g, "$1\u00a0")
         .replace(/ a year$/, " в год")
         .replace(/ a month$/, " в месяц")
         .replace(/ a day$/, " в день")
         .replace(/ an hour$/, " в час"),
-    week: (k) => `Все ${n(k)} за последнюю неделю`,
+    week: (k) => `Все ${ruN(k)} за последнюю неделю`,
     can: (k) =>
       `${ru(k, "новая вакансия", "новые вакансии", "новых вакансий")} у работодателей из реестра спонсоров или с зарплатой для Blue Card:`,
     see: "смотреть",

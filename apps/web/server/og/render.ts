@@ -1,6 +1,7 @@
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 import type { RoleCard } from "#shared/answers";
+import { languageList } from "#shared/evidence";
 
 // The share image (1200×630) every page links to: the owner's design (Claude Design, 2026-10-27), drawn by Satori
 // into SVG and by resvg into PNG, with the live numbers and the three newest roles that sponsor a visa. The fonts
@@ -128,14 +129,12 @@ const chip = (style: Style, icon: Node, label: string) =>
     [icon, label],
   );
 
-const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
 // One role as its card on the site: title and age, where, and its answers.
 function role(r: RoleCard, first: boolean): Node {
   const language = !r.languages
     ? null
     : r.languages.length
-      ? `${r.languages.map(capital).join(", ")} required`
+      ? `${languageList(r.languages)} required`
       : "English only";
   return h(
     "div",
@@ -175,7 +174,8 @@ function role(r: RoleCard, first: boolean): Node {
         { fontSize: 17, color: C.fg2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
         [r.company, r.place, r.workMode].filter(Boolean).join(" · "),
       ),
-      h("div", { display: "flex", alignItems: "center", gap: 8 }, [
+      // One row: a long language list is cut short rather than run past the card
+      h("div", { display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }, [
         chip(
           { backgroundColor: C.accent, color: C.onAccent, fontWeight: 600 },
           ICON.check(C.onAccent),
@@ -196,12 +196,20 @@ function role(r: RoleCard, first: boolean): Node {
                 alignItems: "center",
                 gap: 6,
                 marginLeft: 6,
+                minWidth: 0,
+                flexShrink: 1,
                 fontFamily: MONO,
                 fontSize: 13,
                 color: C.fg2,
-                whiteSpace: "nowrap",
               },
-              [ICON.globe, language],
+              [
+                ICON.globe,
+                h(
+                  "div",
+                  { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 },
+                  language,
+                ),
+              ],
             )
           : null,
       ]),
@@ -222,7 +230,8 @@ const dot = (fill: string, border: string, label: string) =>
     label,
   ]);
 
-// The site's share image: the pitch with the live numbers on the left, the newest roles that sponsor on the right.
+// The site's share image: the pitch with the live numbers on the left, the newest roles that sponsor on the right
+// (three fit).
 export function siteImage(facts: string, roles: RoleCard[]): Node {
   return h(
     "div",
@@ -249,7 +258,7 @@ export function siteImage(facts: string, roles: RoleCard[]): Node {
           flexDirection: "column",
           justifyContent: "space-between",
         },
-        roles.slice(0, 3).map((r, i) => role(r, i === 0)),
+        roles.map((r, i) => role(r, i === 0)),
       ),
       h(
         "div",

@@ -95,7 +95,7 @@ The channels are [@visaproof](https://t.me/visaproof) and, with the same post in
 3. In `/srv/sponsored/.env`: `TELEGRAM_CHANNEL=@visaproof` (the channel's name), and `TELEGRAM_CHANNEL_RU=@visaproof_ru`
    for the Russian one.
 
-Without `TELEGRAM_CHANNEL` nothing is posted. Post now with `systemctl start sponsored-channel`; see what the next
+A channel without its line in `.env` gets no post. Post now with `systemctl start sponsored-channel`; see what the next
 post would say, without writing or sending it, with `docker compose run --rm -T pipeline channel --dry` (add
 `--lang ru` for the Russian one).
 
