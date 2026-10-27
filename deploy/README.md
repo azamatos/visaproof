@@ -86,14 +86,18 @@ next one; if Telegram doesn't answer, they stay posted rather than risk appearin
 alert. No new role, no post. It reads the roles from the site's search, so the site must be up at 07:00. The alerts' bot
 posts it, as an admin of the channel.
 
-The channel is [@visaproof](https://t.me/visaproof) (2026-10-27). Set up by the owner:
+The channels are [@visaproof](https://t.me/visaproof) and, with the same post in Russian,
+[@visaproof_ru](https://t.me/visaproof_ru) (2026-10-27); each keeps its own record of what it posted
+(`channel_post.lang`). Set up by the owner:
 
 1. Create a public channel in Telegram and give it a name, e.g. `@visaproof`.
 2. Channel → Administrators → add the alerts' bot, with "Post messages".
-3. In `/srv/sponsored/.env`: `TELEGRAM_CHANNEL=@visaproof` (the channel's name).
+3. In `/srv/sponsored/.env`: `TELEGRAM_CHANNEL=@visaproof` (the channel's name), and `TELEGRAM_CHANNEL_RU=@visaproof_ru`
+   for the Russian one.
 
 Without `TELEGRAM_CHANNEL` nothing is posted. Post now with `systemctl start sponsored-channel`; see what the next
-post would say, without writing or sending it, with `docker compose run --rm -T pipeline channel --dry`.
+post would say, without writing or sending it, with `docker compose run --rm -T pipeline channel --dry` (add
+`--lang ru` for the Russian one).
 
 ## Everyday commands (on the server)
 
