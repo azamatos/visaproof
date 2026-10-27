@@ -78,11 +78,15 @@ The daily summary covers job boards, roles, extraction (and how many postings wa
 
 Once a day (`sponsored-channel`, 07:00 UTC, after the nightly extraction) the pipeline writes a post of the roles
 posted in the last week whose posting says the employer sponsors a visa or may, not posted before: ten at most, two
-at most from one company, each with its answers and a link to its page on the site, then how many more new roles
-are at employers that can sponsor (`apps/pipeline/src/channel.ts`). Its roles count as posted once it's written;
+at most from one company, grouped by country, one line each (the title links to its page on the site; company and
+city, pay, a local language it needs, ✈️ when it helps you move), then how many more new roles are at employers
+that can sponsor, and the countries as hashtags (`apps/pipeline/src/channel.ts`). Its roles count as posted once it's written;
 `deploy/channel.sh` sends it and marks it sent. If Telegram refuses it, the post is dropped and its roles go in the
 next one; if Telegram doesn't answer, they stay posted rather than risk appearing twice. Either way the owner gets an
-alert. No new role, no post. It reads the roles from the site's search, so the site must be up at 07:00. The alerts' bot posts it, as an admin of the channel. Set up by the owner:
+alert. No new role, no post. It reads the roles from the site's search, so the site must be up at 07:00. The alerts' bot
+posts it, as an admin of the channel.
+
+The channel is [@visaproof](https://t.me/visaproof) (2026-10-27). Set up by the owner:
 
 1. Create a public channel in Telegram and give it a name, e.g. `@visaproof`.
 2. Channel → Administrators → add the alerts' bot, with "Post messages".
