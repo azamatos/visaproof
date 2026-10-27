@@ -43,6 +43,11 @@ export type RoleCard = {
   languages: string[] | null;
   salary: string | null;
   posted: string;
+  // Where, as data (the Telegram channel groups roles by it): the countries the site covers, the city when the place
+  // names one, and how far a remote role reaches ("countries": only these countries).
+  countries: string[];
+  city: string;
+  remote: "anywhere" | "europe" | "countries" | null;
 };
 
 // The other filters, in the order the design lists them.
