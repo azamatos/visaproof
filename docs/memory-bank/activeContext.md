@@ -24,7 +24,8 @@
 - **Tests:** pipeline unit tests (65), site unit tests (23), browser tests with Playwright and axe on a phone and a
   desktop (65, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
 - **Lighthouse on a phone, production** (2026-10-26): performance search 100, job 98, company 96, Germany 99,
-  Status 97; accessibility 100; SEO 63 is the intended `noindex`. Best practices 96 only because this Mac's DNS
+  Status 97; accessibility 100; SEO 100 on search, a role, a company, Germany and Method since indexing
+  (2026-10-27). Best practices 96 only because this Mac's DNS
   blocks Cloudflare's analytics script (a console error in the test, not on a visitor's phone).
 - The repo is `azamatos/visaproof`, public. The folder and the server paths keep the working name `sponsored`.
 

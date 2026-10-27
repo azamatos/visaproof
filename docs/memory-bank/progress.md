@@ -163,4 +163,6 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
   production: performance 96–100, accessibility 100.
 - 2026-10-27: search engines and link previews: a share image for every page (the role's, company's or country's
   own), sitemaps of the open roles, companies and countries, canonical links, robots.txt, the site's name in search
-  results. The owner decided to open indexing now; on from 2026-10-27.
+  results. A code review (14 fixes: 503 instead of noindex when the API fails, one canonical link per page, the
+  company image following its page, HEAD for the sitemaps, a cache for the images). The owner decided to open
+  indexing now: on from 2026-10-27, deployed; Lighthouse SEO 100 in production.
