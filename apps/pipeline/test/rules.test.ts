@@ -472,20 +472,20 @@ Each posting says the employer sponsors a visa, or may. Tap a role for the exact
         }),
         role({ id: 3, remote: "europe", countries: [], city: "", place: "Remote in Europe" }),
       ],
-      { more: 2, week: 21, can: 5 },
+      { more: 2, week: 1234, can: 5 },
       now,
       site,
       "ru",
     );
     expect(text).toContain("<b>Новые вакансии для разработчиков со спонсорством визы</b> · ср, 28 окт.");
     expect(text).toContain(
-      '🇩🇪 <b>Германия</b>\n• <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, Berlin · €70,000–90,000 в год · 🗣 немецкий ✈️',
+      '🇩🇪 <b>Германия</b>\n• <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, Berlin · €70\u00a0000–90\u00a0000 в год · 🗣 немецкий ✈️',
     );
     expect(text).toContain(
-      '🗺 <b>Несколько стран</b>\n• <a href="https://x.test/jobs/2">Backend Engineer</a> · Fjord &amp; Co, London, Великобритания или Германия · €70,000–90,000 в год · <i>может спонсировать</i> · <i>без релокации</i>',
+      '🗺 <b>Несколько стран</b>\n• <a href="https://x.test/jobs/2">Backend Engineer</a> · Fjord &amp; Co, Великобритания или Германия · €70\u00a0000–90\u00a0000 в год · <i>может спонсировать</i> · <i>без релокации</i>',
     );
     expect(text).toContain("🇪🇺 <b>Удалённо по Европе</b>");
-    expect(text).toContain("Все 21 за последнюю неделю");
+    expect(text).toContain("Все 1\u00a0234 за последнюю неделю");
     expect(text).toContain("5 новых вакансий у работодателей из реестра спонсоров");
     expect(text.endsWith("#Германия #УдалённоПоЕвропе")).toBe(true);
   });

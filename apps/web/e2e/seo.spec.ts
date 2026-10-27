@@ -25,7 +25,10 @@ test("gives a role its canonical link, and every page the site's share image", a
     "content",
     "Senior Backend Engineer (Go) at Fjord Systems",
   );
-  await expect(meta(page, "og:image")).toHaveAttribute("content", `${SITE}/og/site.png`);
+  await expect(meta(page, "og:image")).toHaveAttribute(
+    "content",
+    new RegExp(`^${SITE}/og/site\\.png\\?d=\\d{4}-\\d{2}-\\d{2}$`),
+  );
   await expect(meta(page, "twitter:card")).toHaveAttribute("content", "summary_large_image");
 
   const image = await request.get("/og/site.png");

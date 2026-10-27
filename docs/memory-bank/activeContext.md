@@ -17,8 +17,8 @@
   country pages (full permit guides for Germany, the Netherlands and the UK; "not researched yet" elsewhere),
   Method, Status with a stale-data notice on every page, a 404 page, a content security policy, API caching.
   Live at visaproof.azamatos.com.
-- **Search engines** (2026-10-27): a share image for every page (the role's, company's or country's own, drawn
-  from the data), sitemaps (about 15,000 open roles, 2,500 companies, the countries), canonical links, robots.txt.
+- **Search engines** (2026-10-27): one share image for every page (the owner's design, drawn live: decision 3
+  below), sitemaps (about 15,000 open roles, 2,500 companies, the countries), canonical links, robots.txt.
   Indexing is on since 2026-10-27 (`deploy/compose.yml`). No JobPosting markup: Google wants the posting's full
   text in it, and we don't republish postings.
 - **Tests:** pipeline unit tests (65), site unit tests (23), browser tests with Playwright and axe on a phone and a

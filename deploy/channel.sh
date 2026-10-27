@@ -32,8 +32,11 @@ post() { # lang channel
       echo "posted $id to $2"
       ;;
     4*)
-      pipeline channel-drop "$id" || true
-      echo "Telegram refused post $id for $2 (HTTP $code): dropped, its roles go in the next post" >&2
+      if pipeline channel-drop "$id"; then
+        echo "Telegram refused post $id for $2 (HTTP $code): dropped, its roles go in the next post" >&2
+      else
+        echo "Telegram refused post $id for $2 (HTTP $code), and dropping it failed: its roles stay counted as posted" >&2
+      fi
       return 1
       ;;
     *)
