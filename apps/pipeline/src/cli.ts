@@ -6,7 +6,7 @@ import { report } from "./report.ts";
 import { sample, score, scoreLanguages } from "./evaluation.ts";
 import { extract } from "./extract.ts";
 import { digest } from "./digest.ts";
-import { channel, channelSent } from "./channel.ts";
+import { channel, channelDrop, channelSent } from "./channel.ts";
 import { checkLanguages } from "./languages.ts";
 import { readTechnologies } from "./technologies.ts";
 import { loadNames } from "./companies.ts";
@@ -27,9 +27,10 @@ const HELP = `node src/cli.ts <command>
   report                  print the numbers as Markdown
   digest [host.json]      print the summary of the last 24 hours as Telegram HTML (deploy/digest.sh sends it,
                           passing the backup, the disk and the failed units as JSON)
-  channel                 write the public channel's next post: print its id, then the post as Telegram HTML
-                          (nothing when no new role sponsors); deploy/channel.sh sends it
-  channel-sent <id>       mark a post as sent, so its roles aren't posted again
+  channel [--dry]         write the public channel's next post: print its id, then the post as Telegram HTML
+                          (nothing when no new role sponsors); deploy/channel.sh sends it. --dry only prints it
+  channel-sent <id>       mark a post as sent
+  channel-drop <id>       drop a post Telegram refused, so its roles can go in the next one
   extract [--model m] [--limit n] [--labelled] [--effort e]
                           read the open postings that mention visas with Claude Code (or the labelled set)
   languages [--model m] [--limit n] [--labelled]
@@ -90,11 +91,16 @@ try {
       await digest(args[0]);
       break;
     case "channel":
-      await channel();
+      await channel(args.includes("--dry"));
       break;
     case "channel-sent":
-      await channelSent(Number(args[0]));
+    case "channel-drop": {
+      const id = Number(args[0]);
+      if (!Number.isInteger(id) || id < 1)
+        throw new Error(`${cmd} needs a post id: node src/cli.ts ${cmd} <id>`);
+      await (cmd === "channel-sent" ? channelSent(id) : channelDrop(id));
       break;
+    }
     case "eval-sample":
       await sample();
       break;

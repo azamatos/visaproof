@@ -57,3 +57,8 @@ export const iso = (v: string | number | null | undefined): string | null => {
   const d = typeof v === "number" ? new Date(v < 1e12 ? v * 1000 : v) : new Date(v);
   return isNaN(d.getTime()) ? null : d.toISOString();
 };
+
+// For Telegram messages: a number as people write it, a count with its noun, and text made safe for its HTML.
+export const n = (x: number) => x.toLocaleString("en-US");
+export const count = (k: number, one: string, many = `${one}s`) => `${n(k)} ${k === 1 ? one : many}`;
+export const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
