@@ -43,6 +43,8 @@ export default defineNuxtConfig({
     public: {
       // Where "Report a wrong answer" and removal requests go (NUXT_PUBLIC_CORRECTIONS_EMAIL)
       correctionsEmail: "hi@azamatos.com",
+      // The Telegram channel the header links to; its pinned post links to the Russian one (NUXT_PUBLIC_TELEGRAM_URL)
+      telegramUrl: "https://t.me/visaproof",
       // Canonical links, share images and sitemaps point here (NUXT_PUBLIC_SITE_URL)
       siteUrl: "https://visaproof.azamatos.com",
       // Off by default, so local runs and tests say noindex everywhere; the server turns it on (NUXT_PUBLIC_INDEXABLE)

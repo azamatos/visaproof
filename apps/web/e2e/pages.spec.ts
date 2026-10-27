@@ -78,3 +78,15 @@ test("loads every page without errors in the console (the content security polic
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Senior Backend Engineer (Go)");
   expect(errors).toEqual([]);
 });
+
+test("links the Telegram channel from the header, opening Telegram", async ({ page }) => {
+  await page.goto("/method");
+  // One link either way: the bell on a phone, the bell and the word on a desktop
+  const telegram = page.getByRole("banner").getByRole("link", { name: "Telegram channel, opens Telegram" });
+  await expect(telegram).toHaveCount(1);
+  await expect(telegram).toBeVisible();
+  await expect(telegram).toHaveAttribute("href", "https://t.me/visaproof");
+  await expect(telegram).toHaveAttribute("target", "_blank");
+  const box = await telegram.boundingBox();
+  expect(box?.height).toBeGreaterThanOrEqual(44);
+});
