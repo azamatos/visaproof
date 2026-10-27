@@ -12,8 +12,8 @@ Public launch (sharing it) follows when the owner is happy with it.
 | Sat Oct 24 | Done: cron fixes, clearer Telegram messages, register review (200 employers), official amounts, language check, `role_answer`, the site's search page (live search, filters, themes), the preview deployed (noindex) | Done: design decisions, hosting confirmed, DNS record                    |
 | Sun Oct 25 | Done: the review's fixes (board dates, technology search, per-country "Can sponsor"), job page, Method, Status, company and country pages, company names, browser tests in CI, CSP, docs                             | Done: decided search matching, names, country pages, corrections address |
 | Mon Oct 26 | Done: code review (15 fixes), merged (PR #1) and deployed; Lighthouse on production 96–100. Next: spot-check corrections                                                                                             | Spot-check about 20 register reviews and the flagged names (15 minutes)  |
-| Tue Oct 27 | Done: share images, sitemaps, robots, canonical links; indexing on. Next: `docs/learning/` notes; more boards that post for others                                                                                   | —                                                                        |
-| Wed Oct 28 | Polish                                                                                                                                                                                                               | —                                                                        |
+| Tue Oct 27 | Done: sitemaps, robots, canonical links, indexing on; README; Telegram channels (EN, RU) with a daily post; the owner's share image and icons; the header's Telegram link (PRs #2–#6)                                | Done: indexing, the channels, the share image and icons, pinned posts    |
+| Wed Oct 28 | Check the first channel posts (07:00 UTC); `docs/learning/` notes; more boards that post for others; polish                                                                                                          | Search Console and Bing                                                  |
 | Thu Oct 29 | Fixes from the owner's review                                                                                                                                                                                        | Review the preview on a phone and a desktop                              |
 | Fri Oct 30 | MVP done                                                                                                                                                                                                             | —                                                                        |
 
@@ -171,3 +171,9 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
   results. A code review (14 fixes: 503 instead of noindex when the API fails, one canonical link per page, the
   company image following its page, HEAD for the sitemaps, a cache for the images). The owner decided to open
   indexing now: on from 2026-10-27, deployed; Lighthouse SEO 100 in production.
+  Later the same day: the README for the live site (screenshots, accuracy, stack) and the old name out of the
+  descriptions; two public Telegram channels, @visaproof and @visaproof_ru, with a daily post of the new roles that
+  sponsor (one line per role, by country, after an example the owner forwarded), names, descriptions, photos and
+  pinned posts set through the bot; the owner's share image (drawn live) and icons from Claude Design, replacing the
+  agent's per-page images; the header's Telegram link from a new design board. PRs #2–#5 had code reviews; 50
+  findings fixed in all (#6, the header link, was small enough for CI alone).

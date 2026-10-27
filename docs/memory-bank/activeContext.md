@@ -21,8 +21,14 @@
   below), sitemaps (about 15,000 open roles, 2,500 companies, the countries), canonical links, robots.txt.
   Indexing is on since 2026-10-27 (`deploy/compose.yml`). No JobPosting markup: Google wants the posting's full
   text in it, and we don't republish postings.
-- **Tests:** pipeline unit tests (65), site unit tests (23), browser tests with Playwright and axe on a phone and a
-  desktop (65, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
+- **Telegram channels** (2026-10-27): [@visaproof](https://t.me/visaproof) and
+  [@visaproof_ru](https://t.me/visaproof_ru) get a daily post at 07:00 UTC of the week's new roles whose posting
+  says the employer sponsors (`sponsored-channel` timer, `deploy/channel.sh`, `src/channel.ts`); the first posts
+  go out 2026-10-28. Each has a pinned intro post linking the other, and the site's header links to @visaproof.
+  The alerts' bot posts as an admin of both.
+- **Tests:** pipeline unit tests (71), site unit tests (24), browser tests with Playwright and axe on a phone and a
+  desktop (69, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18 (its Chrome install is
+  sometimes slow on GitHub's side: 10+ minutes).
 - **Lighthouse on a phone, production** (2026-10-26): performance search 100, job 98, company 96, Germany 99,
   Status 97; accessibility 100; SEO 100 on search, a role, a company, Germany and Method since indexing
   (2026-10-27). Best practices 96 only because this Mac's DNS
@@ -51,6 +57,17 @@
    (`UiSelect`). Rules in `techContext.md` → Website.
 4. **Preview:** published now, with `noindex` until the public launch.
 
+2026-10-25 (after a review of the project and the plan; the owner agreed with all of it):
+
+1. **Search matches** the title, the company and a list of technologies recognised in each posting (a dictionary
+   with aliases), not the posting's whole text.
+2. **Company names:** agents name the biggest unnamed boards with evidence, like the register review.
+3. **Country pages:** full permit guides for Germany, the Netherlands and the UK only for the MVP; other countries
+   say they aren't researched yet.
+4. **Corrections address:** `hi@azamatos.com` (already routed). "Report a wrong answer" writes an email to it.
+5. The order of work: the review's bugs first (board dates, technology search, per-country "Can sponsor"), then
+   the job page, then Method and Status, then company and country pages; browser tests come with each page.
+
 2026-10-27:
 
 1. **Indexing on** now, ahead of the Thursday review (search engines take days to weeks to crawl).
@@ -70,33 +87,25 @@
 5. **The design export** in `docs/design/` (the owner's, for building from) stays out of git: the canvas is
    private.
 
-2026-10-25 (after a review of the project and the plan; the owner agreed with all of it):
-
-1. **Search matches** the title, the company and a list of technologies recognised in each posting (a dictionary
-   with aliases), not the posting's whole text.
-2. **Company names:** agents name the biggest unnamed boards with evidence, like the register review.
-3. **Country pages:** full permit guides for Germany, the Netherlands and the UK only for the MVP; other countries
-   say they aren't researched yet.
-4. **Corrections address:** `hi@azamatos.com` (already routed). "Report a wrong answer" writes an email to it.
-5. The order of work: the review's bugs first (board dates, technology search, per-country "Can sponsor"), then
-   the job page, then Method and Status, then company and country pages; browser tests come with each page.
-
 ## Waiting for the owner
 
 - Google Search Console and Bing Webmaster Tools: add the site and submit
   `https://visaproof.azamatos.com/sitemap.xml`. A Domain property for `azamatos.com` already covers the subdomain;
   otherwise verifying is a DNS record (or a meta tag an agent adds). Bing can import the site from Search Console.
 - Thu Oct 29: review the site on a phone and a desktop.
+- Optional: a share image per role or company, if the owner designs one (every page uses the site's now).
 
 ## Next steps (in order)
 
-1. Once the owner has added the site to Search Console: what Google indexes (its Pages report). Closed roles
+1. After 07:00 UTC on 2026-10-28: check the first channel posts went out to both channels
+   (`journalctl -u sponsored-channel`, the channels themselves) and read them as a subscriber would.
+2. Once the owner has added the site to Search Console: what Google indexes (its Pages report). Closed roles
    should drop out; short job pages may stay "crawled, not indexed", the company and country pages matter more.
-2. Boards that post for others beyond the 6 flagged: find more (staffing agencies, aggregators), and decide whether
+3. Boards that post for others beyond the 6 flagged: find more (staffing agencies, aggregators), and decide whether
    their register answers should count at all.
-3. `docs/learning/` notes for the owner (Nuxt and Vue concepts as they appear in the code).
-4. Polish from the owner's Thursday review.
-5. Update this file and `progress.md`.
+4. `docs/learning/` notes for the owner (Nuxt and Vue concepts as they appear in the code).
+5. Polish from the owner's Thursday review.
+6. Update this file and `progress.md`.
 
 Method for register and name reviews: the register first; when unsure, the company's site (the board's logo links
 to it), then decide (`reviews/README.md`).
@@ -111,6 +120,9 @@ to it), then decide (`reviews/README.md`).
 - The language check fills over the next nights; until then "No local language" and the country pages' language
   numbers cover only the postings read so far (they say so).
 - The technology matcher still gets "Unity" wrong about 2 times in 6 (a company value, a C test framework).
+- Proposed, not decided: an RSS feed of the channel's roles; a Telegram bot with personal alerts once the channels
+  draw people (M5); landing pages from real data ("companies that sponsor in Germany") where there are enough
+  roles.
 
 Settled earlier: the eval bar is precision ≥ 95% for "offers"; countries at launch are the EU, EEA, UK and
 Switzerland, with Germany done best; the repo is public from day one.

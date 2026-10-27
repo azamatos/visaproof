@@ -5,7 +5,8 @@ boards, with an evidence-backed answer to "will they sponsor a visa, and will th
 Site: visaproof.azamatos.com (open to search engines since 2026-10-27). Owner: Azamat Jorayev (azamatos). Applies to every agent tool; Claude Code also reads `CLAUDE.md`.
 
 **Status (2026-10-27):** the data pipeline runs on a server every 6 hours; the site (search, job, company and
-country pages, Method, Status) is live and open to search engines, with share images and sitemaps. Current state and the next steps:
+country pages, Method, Status) is live and open to search engines, with share images and sitemaps; the new roles
+that sponsor go to two Telegram channels every morning (@visaproof, @visaproof_ru). Current state and the next steps:
 `docs/memory-bank/activeContext.md`.
 
 ## Read first
