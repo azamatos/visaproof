@@ -120,7 +120,8 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
 - [x] README: screenshots, how it works, accuracy, what it's built with, how to run (2026-10-27)
 - [x] The public Telegram channels, [@visaproof](https://t.me/visaproof) and
       [@visaproof_ru](https://t.me/visaproof_ru) in Russian: a daily post of the new roles that sponsor, first posts
-      2026-10-28 at 07:00 UTC
+      2026-10-28 at 07:00 UTC; each has a pinned post that links to the other (2026-10-27)
+- [x] The Telegram link in the site's header, to the owner's design (2026-10-27)
 - [x] Share image and icons to the owner's design (Claude Design), the share image drawn live (2026-10-27)
 - [ ] `/method` with the measured accuracy and known limits
 - [ ] Competitors re-checked (`projectbrief.md`)

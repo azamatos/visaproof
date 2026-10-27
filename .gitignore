@@ -12,3 +12,6 @@ CLAUDE.local.md
 # browser tests
 test-results/
 playwright-report/
+
+# The owner's design canvas, exported locally to build from; the canvas is private
+docs/design/

@@ -57,14 +57,18 @@
 2. **A public Telegram channel**, [@visaproof](https://t.me/visaproof), with a daily post of the new roles that say
    they sponsor (`deploy/README.md` → The public channel). Created by the owner; set up and deployed 2026-10-27,
    first post 2026-10-28 at 07:00 UTC. Its layout follows an established relocation channel the owner forwarded
-   (one line per role, grouped by country, hashtags), with the visa evidence theirs lacks. A bot with personal alerts only if the channel draws people; no group
-   for now (moderation).
+   (one line per role, grouped by country, hashtags), with the visa evidence theirs lacks. Each channel has a pinned
+   post that links to the other (owner's approval, 2026-10-27), and the site's header links to @visaproof (the
+   owner's design board "Telegram · link in the header"). A bot with personal alerts only if the channel draws
+   people; no group for now (moderation).
 3. **Share images and icons** come from the owner's Claude Design (2026-10-27): one share image for every page
    (`/og/site.png`, drawn live from that design with the numbers and the three newest roles that sponsor), and the
    favicons and app icons. A per-role or per-company image only from a design of the owner's.
 4. **A Russian channel**, [@visaproof_ru](https://t.me/visaproof_ru), with the same daily post in Russian (the
    example channel's audience); each channel keeps its own record of what it posted. Names, descriptions and the
    channel photo set by the agent through the bot (2026-10-27).
+5. **The design export** in `docs/design/` (the owner's, for building from) stays out of git: the canvas is
+   private.
 
 2026-10-25 (after a review of the project and the plan; the owner agreed with all of it):
 
