@@ -19,9 +19,10 @@ const {
   lazy: import.meta.client,
 });
 const notFound = computed(() => error.value?.statusCode === 404);
-if (import.meta.server && notFound.value) {
+// Any other failure is passing: 503 asks crawlers to come back rather than drop the page.
+if (import.meta.server && error.value) {
   const event = useRequestEvent();
-  if (event) setResponseStatus(event, 404);
+  if (event) setResponseStatus(event, notFound.value ? 404 : 503);
 }
 const items = computed(() => (company.value ? companyEvidence(company.value) : []));
 const email = useRuntimeConfig().public.correctionsEmail;
@@ -39,10 +40,11 @@ usePageSeo({
   title: () => company.value?.name ?? (notFound.value ? "Company not found" : "Company"),
   description: () =>
     company.value
-      ? `${company.value.name}: ${String(company.value.open)} open developer roles in Europe, and whether it can hire on a visa.`
+      ? `${company.value.name}: ${String(company.value.open)} open developer ${company.value.open === 1 ? "role" : "roles"} in Europe, and whether it can hire on a visa.`
       : undefined,
   image: () => `companies/${boardPath.value}`,
-  index: () => !!company.value?.open,
+  // As the sitemap lists it: a company with open roles, on a page that has some of them.
+  index: () => !!company.value?.open && page.value <= company.value.pages,
   path: () => `/companies/${boardPath.value}${page.value > 1 ? `?page=${String(page.value)}` : ""}`,
 });
 </script>

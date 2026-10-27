@@ -12,6 +12,8 @@ export function usePageSeo(seo: {
   index?: MaybeRefOrGetter<boolean>;
   // The canonical path; by default the page's path without its query.
   path?: MaybeRefOrGetter<string | undefined>;
+  // The path a shared link keeps (og:url), when it isn't the canonical one: a search keeps its filters.
+  sharePath?: MaybeRefOrGetter<string | undefined>;
 }) {
   const { siteUrl, indexable } = useRuntimeConfig().public;
   const route = useRoute();
@@ -22,7 +24,10 @@ export function usePageSeo(seo: {
     description: seo.description,
     ogTitle: title,
     ogDescription: seo.description,
-    ogUrl: url,
+    ogUrl: () => {
+      const share = toValue(seo.sharePath);
+      return share ? siteUrl + share : url.value;
+    },
     ogImage: () => `${siteUrl}/og/${toValue(seo.image) ?? "site"}.png`,
     ogImageWidth: 1200,
     ogImageHeight: 630,

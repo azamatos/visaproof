@@ -1,6 +1,7 @@
 import { sitemapIndex } from "#shared/seo";
 
 export default defineEventHandler(async (event) => {
+  assertMethod(event, "GET", true);
   const url = siteUrl(event);
   const at = await lastRead();
   return sitemapXml(

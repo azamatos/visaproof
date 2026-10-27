@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from "reka-ui";
 import { VISA_LEVELS } from "#shared/answers";
+import { SITE_NAME } from "#shared/seo";
 
 const route = useRoute();
 const { param, on, set, filtered, clear } = useSearch();
@@ -40,6 +41,7 @@ usePageSeo({
     "Software developer jobs in Europe with the visa answer first: whether the employer sponsors a visa, quoted from the posting or the official sponsor register.",
   index: () => !Object.keys(route.query).length,
   path: "/",
+  sharePath: () => route.fullPath.split("#")[0],
 });
 const { siteUrl } = useRuntimeConfig().public;
 useHead({
@@ -50,7 +52,7 @@ useHead({
       innerHTML: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: "Visaproof",
+        name: SITE_NAME,
         alternateName: "visaproof.azamatos.com",
         url: `${siteUrl}/`,
       }),

@@ -10,9 +10,10 @@ export const sitemapXml = (event: H3Event, xml: string) => {
 
 export const siteUrl = (event: H3Event) => useRuntimeConfig(event).public.siteUrl;
 
-// When the job boards were last read: the date of the lists that change with every run.
+// When the job boards were last read: the date of the lists that change with every run. A run that failed changed
+// nothing.
 export async function lastRead(): Promise<Date | null> {
   const [r] = await db()<{ at: Date | null }[]>`
-    select max(finished_at) as at from run where kind = 'ingest' and finished_at is not null`;
+    select max(finished_at) as at from run where kind = 'ingest' and ${workedRun()}`;
   return r?.at ?? null;
 }
