@@ -7,7 +7,7 @@ import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById, workdayMaintenance } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { render, summarise } from "../src/digest.ts";
-import { type Card, channelMessage, fit, pick } from "../src/channel.ts";
+import { channelMessage, fit, pick, type Role } from "../src/channel.ts";
 import { excerpt, locate } from "../src/extract.ts";
 import { languageExcerpt, needsReading, verify } from "../src/languages.ts";
 import { parseCsv, core } from "../src/registers.ts";
@@ -338,7 +338,7 @@ describe("digest", () => {
 });
 
 describe("channel", () => {
-  const card = (over: Partial<Card>): Card => ({
+  const role = (over: Partial<Role>): Role => ({
     id: 1,
     title: "Backend Engineer",
     company: "Fjord & Co",
@@ -348,70 +348,95 @@ describe("channel", () => {
     relocation: "helps",
     languages: [],
     salary: "€70,000–90,000 a year",
+    countries: ["DE"],
     ...over,
   });
   const now = new Date("2026-10-28T07:00:00Z");
 
-  it("lists each role with its answers and a link to its page, escaped", () => {
+  it("lists the roles by country, one line each, escaped", () => {
     expect(
       channelMessage(
         [
-          card({}),
-          card({
+          role({}),
+          role({
             id: 2,
             title: "C++ <Engine>",
             visa: "may",
-            relocation: "silent",
+            relocation: "no",
             languages: ["german"],
+            salary: null,
+            place: "Germany",
+          }),
+          role({
+            id: 3,
+            company: "Polder",
+            place: "Amsterdam, Netherlands",
+            countries: ["NL"],
+            salary: null,
+          }),
+          role({
+            id: 4,
+            company: "Wide",
+            place: "Remote in 22 countries",
+            workMode: "Remote",
+            countries: ["DE", "NL", "PL", "ES"],
             salary: null,
           }),
         ],
-        { more: 0, week: 2, can: 0 },
+        { more: 0, week: 4, can: 0 },
         now,
         "https://x.test",
       ),
-    ).toBe(`<b>New roles that sponsor a visa</b>
-Wed 28 Oct · from companies' own job boards
+    ).toBe(`<b>New developer roles that sponsor a visa</b> · Wed 28 Oct
+Each posting says the employer sponsors a visa, or may. Tap a role for the exact sentence and where to apply.
+✈️ helps you move · 🗣 a local language needed
 
-<a href="https://x.test/jobs/1"><b>Backend Engineer</b></a>
-Fjord &amp; Co · Berlin, Germany · Hybrid
-Sponsors visa · Helps you move · English only · €70,000–90,000 a year
+🇩🇪 <b>Germany</b>
+• <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, Berlin · €70,000–90,000 a year ✈️
+• <a href="https://x.test/jobs/2">C++ &lt;Engine&gt;</a> · Fjord &amp; Co · 🗣 German · <i>may sponsor</i>
 
-<a href="https://x.test/jobs/2"><b>C++ &lt;Engine&gt;</b></a>
-Fjord &amp; Co · Berlin, Germany · Hybrid
-May sponsor · German required`);
+🇳🇱 <b>Netherlands</b>
+• <a href="https://x.test/jobs/3">Backend Engineer</a> · Polder, Amsterdam ✈️
+
+🇪🇺 <b>Several countries</b>
+• <a href="https://x.test/jobs/4">Backend Engineer</a> · Wide, Remote in 4 countries ✈️
+
+#Germany #Netherlands`);
   });
 
   it("links to the rest, and counts the new roles at employers that can sponsor", () => {
     const text = channelMessage(
-      [card({ languages: null, relocation: "no" })],
+      [role({ countries: ["GB"], place: "London, United Kingdom" })],
       { more: 3, week: 40, can: 1 },
       now,
       "https://x.test",
     );
-    expect(text).toContain("Sponsors visa · No relocation · €70,000–90,000 a year\n");
     expect(text).toContain(
-      '<a href="https://x.test/?visa=may&amp;within=7&amp;sort=newest">All 40 roles from the last week that sponsor or may</a>',
+      '🇬🇧 <b>United Kingdom</b>\n• <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, London',
     );
-    expect(text).toContain("Also new in the last day: 1 role at employers that can sponsor");
+    expect(text).toContain(
+      '<a href="https://x.test/?visa=may&amp;within=7&amp;sort=newest">All 40 from the last week</a>',
+    );
+    expect(text).toContain("1 new role at employers on a sponsor register or paying a Blue Card salary");
+    expect(text.endsWith("#UnitedKingdom")).toBe(true);
   });
 
   it("keeps a post within Telegram's limit, leaving the rest for the next one", () => {
-    const long = Array.from({ length: 10 }, (_, i) => card({ id: i + 1, title: "Engineer ".repeat(60) }));
+    const long = Array.from({ length: 10 }, (_, i) => role({ id: i + 1, title: "Engineer ".repeat(60) }));
     const { roles, text } = fit(long, { week: 12, can: 0, left: 2 }, now, "https://x.test");
     expect(text.length).toBeLessThanOrEqual(4000);
     expect(roles.length).toBeLessThan(10);
-    expect(text).toContain("All 12 roles from the last week");
+    expect(text).toContain("All 12 from the last week");
   });
 
   it("puts the roles that sponsor first, two at most from one company", () => {
     const roles = [
-      card({ id: 1, visa: "may" }),
-      card({ id: 2 }),
-      card({ id: 2 }),
-      card({ id: 3 }),
-      card({ id: 4 }),
-      card({ id: 5, company: "Other" }),
+      role({ id: 1, visa: "may" }),
+      role({ id: 2 }),
+      role({ id: 2 }),
+      role({ id: 3 }),
+      role({ id: 4 }),
+      role({ id: 5, company: "Other" }),
     ];
     expect(pick(roles).map((r) => r.id)).toEqual([2, 3, 5]);
   });
