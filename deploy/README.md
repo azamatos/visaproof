@@ -29,6 +29,7 @@ again.
 | `sponsored-backup`    | daily 02:50          | `deploy/backup.sh`: `pg_dump` to `/srv/sponsored/backups`, kept 7 days                                                                         |
 | `sponsored-extract`   | daily 01:00          | `extract`: Claude Code (Opus) reads up to 1,500 new postings that mention visas; then `languages` (Sonnet), which languages each role requires |
 | `sponsored-digest`    | daily 06:00          | `deploy/digest.sh`: the morning summary on Telegram                                                                                            |
+| `sponsored-channel`   | daily 07:00          | `deploy/channel.sh`: the public channel's post of the new roles that sponsor a visa                                                            |
 
 `Persistent=true` starts a run missed while the server was down as soon as it's back. systemd never starts a unit
 that's still running, so runs can't overlap.
@@ -71,6 +72,23 @@ Test with `systemctl start sponsored-alert@test.service`. Without the two values
 The daily summary covers job boards, roles, extraction (and how many postings wait for it), registers, the server
 (backup, disk) and alerts. No message at all means the server is down. Send one now with
 `systemctl start sponsored-digest`.
+
+## The public channel
+
+Once a day (`sponsored-channel`, 07:00 UTC, after the nightly extraction) the pipeline writes a post of the roles
+posted in the last week whose posting says the employer sponsors a visa or may, not posted before: ten at most, two
+at most from one company, each with its answers and a link to its page on the site, then how many more new roles
+are at employers that can sponsor (`apps/pipeline/src/channel.ts`). `deploy/channel.sh` sends it and marks it sent;
+a post that didn't get through is written again the next day, and a refusal from Telegram is an alert. No new role,
+no post. The alerts' bot posts it, as an admin of the channel. Set up by the owner:
+
+1. Create a public channel in Telegram and give it a name, e.g. `@visaproof`.
+2. Channel → Administrators → add the alerts' bot, with "Post messages".
+3. In `/srv/sponsored/.env`: `TELEGRAM_CHANNEL=@visaproof` (the channel's name).
+
+Without `TELEGRAM_CHANNEL` nothing is posted. Post now with `systemctl start sponsored-channel`; see what the next
+post would say, without sending it, with `docker compose run --rm -T pipeline channel` (it's written again before
+the next send).
 
 ## Everyday commands (on the server)
 
