@@ -458,6 +458,38 @@ Each posting says the employer sponsors a visa, or may. Tap a role for the exact
     expect(bare.endsWith("✈️")).toBe(true);
   });
 
+  it("writes the Russian channel's post in Russian", () => {
+    const text = channelMessage(
+      [
+        role({ languages: ["german"], salary: "€70,000–90,000 a year" }),
+        role({
+          id: 2,
+          visa: "may",
+          relocation: "no",
+          countries: ["GB", "DE"],
+          city: "London",
+          place: "London, United Kingdom or Germany",
+        }),
+        role({ id: 3, remote: "europe", countries: [], city: "", place: "Remote in Europe" }),
+      ],
+      { more: 2, week: 21, can: 5 },
+      now,
+      site,
+      "ru",
+    );
+    expect(text).toContain("<b>Новые вакансии для разработчиков со спонсорством визы</b> · ср, 28 окт.");
+    expect(text).toContain(
+      '🇩🇪 <b>Германия</b>\n• <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, Berlin · €70,000–90,000 в год · 🗣 немецкий ✈️',
+    );
+    expect(text).toContain(
+      '🗺 <b>Несколько стран</b>\n• <a href="https://x.test/jobs/2">Backend Engineer</a> · Fjord &amp; Co, London, Великобритания или Германия · €70,000–90,000 в год · <i>может спонсировать</i> · <i>без релокации</i>',
+    );
+    expect(text).toContain("🇪🇺 <b>Удалённо по Европе</b>");
+    expect(text).toContain("Все 21 за последнюю неделю");
+    expect(text).toContain("5 новых вакансий у работодателей из реестра спонсоров");
+    expect(text.endsWith("#Германия #УдалённоПоЕвропе")).toBe(true);
+  });
+
   it("keeps a post within Telegram's limit, leaving the rest for the next one", () => {
     const long = Array.from({ length: 10 }, (_, i) => role({ id: i + 1, title: "Engineer ".repeat(60) }));
     const { roles, text } = fit(long, { week: 12, can: 0, left: 2 }, now, site);

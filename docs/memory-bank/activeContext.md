@@ -59,8 +59,12 @@
    first post 2026-10-28 at 07:00 UTC. Its layout follows an established relocation channel the owner forwarded
    (one line per role, grouped by country, hashtags), with the visa evidence theirs lacks. A bot with personal alerts only if the channel draws people; no group
    for now (moderation).
-3. **Share images:** the owner doesn't like the current ones and redesigns them in Claude Design; _planned_: the agent
-   rebuilds them from that design (`server/og/render.ts`).
+3. **Share images and icons** come from the owner's Claude Design (2026-10-27): one share image for every page
+   (`/og/site.png`, drawn live from that design with the numbers and the three newest roles that sponsor), and the
+   favicons and app icons. A per-role or per-company image only from a design of the owner's.
+4. **A Russian channel**, [@visaproof_ru](https://t.me/visaproof_ru), with the same daily post in Russian (the
+   example channel's audience); each channel keeps its own record of what it posted. Names, descriptions and the
+   channel photo set by the agent through the bot (2026-10-27).
 
 2026-10-25 (after a review of the project and the plan; the owner agreed with all of it):
 
@@ -79,8 +83,6 @@
   `https://visaproof.azamatos.com/sitemap.xml`. A Domain property for `azamatos.com` already covers the subdomain;
   otherwise verifying is a DNS record (or a meta tag an agent adds). Bing can import the site from Search Console.
 - Thu Oct 29: review the site on a phone and a desktop.
-- The share images' design (Claude Design), then the agent rebuilds them.
-- Proposed 2026-10-27: a second, Russian-language channel from the same data (the example channel's audience).
 
 ## Next steps (in order)
 

@@ -6,7 +6,7 @@ import { report } from "./report.ts";
 import { sample, score, scoreLanguages } from "./evaluation.ts";
 import { extract } from "./extract.ts";
 import { digest } from "./digest.ts";
-import { channel, channelDrop, channelSent } from "./channel.ts";
+import { channel, channelDrop, channelSent, LANGS, type Lang } from "./channel.ts";
 import { checkLanguages } from "./languages.ts";
 import { readTechnologies } from "./technologies.ts";
 import { loadNames } from "./companies.ts";
@@ -27,8 +27,10 @@ const HELP = `node src/cli.ts <command>
   report                  print the numbers as Markdown
   digest [host.json]      print the summary of the last 24 hours as Telegram HTML (deploy/digest.sh sends it,
                           passing the backup, the disk and the failed units as JSON)
-  channel [--dry]         write the public channel's next post: print its id, then the post as Telegram HTML
-                          (nothing when no new role sponsors); deploy/channel.sh sends it. --dry only prints it
+  channel [--lang en|ru] [--dry]
+                          write the next post for that language's channel: print its id, then the post as
+                          Telegram HTML (nothing when no new role sponsors); deploy/channel.sh sends it. --dry
+                          only prints it
   channel-sent <id>       mark a post as sent
   channel-drop <id>       drop a post Telegram refused, so its roles can go in the next one
   extract [--model m] [--limit n] [--labelled] [--effort e]
@@ -90,9 +92,12 @@ try {
     case "digest":
       await digest(args[0]);
       break;
-    case "channel":
-      await channel(args.includes("--dry"));
+    case "channel": {
+      const lang = (opt("lang") ?? "en") as Lang;
+      if (!LANGS.includes(lang)) throw new Error(`channel --lang takes ${LANGS.join(" or ")}`);
+      await channel(lang, args.includes("--dry"));
       break;
+    }
     case "channel-sent":
     case "channel-drop": {
       const id = Number(args[0]);

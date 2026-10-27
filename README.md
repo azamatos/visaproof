@@ -2,7 +2,7 @@
 
 Visa-friendly developer jobs in Europe, with the evidence for every answer:
 [visaproof.azamatos.com](https://visaproof.azamatos.com). New roles that sponsor a visa, every morning on Telegram:
-[@visaproof](https://t.me/visaproof).
+[@visaproof](https://t.me/visaproof), and in Russian [@visaproof_ru](https://t.me/visaproof_ru).
 
 ![Search: roles in Germany whose posting says the employer sponsors a visa](docs/images/search.png)
 
