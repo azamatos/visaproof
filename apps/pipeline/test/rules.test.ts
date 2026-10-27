@@ -7,7 +7,7 @@ import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById, workdayMaintenance } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { render, summarise } from "../src/digest.ts";
-import { type Card, channelMessage, pick } from "../src/channel.ts";
+import { type Card, channelMessage, fit, pick } from "../src/channel.ts";
 import { excerpt, locate } from "../src/extract.ts";
 import { languageExcerpt, needsReading, verify } from "../src/languages.ts";
 import { parseCsv, core } from "../src/registers.ts";
@@ -366,8 +366,7 @@ describe("channel", () => {
             salary: null,
           }),
         ],
-        0,
-        0,
+        { more: 0, week: 2, can: 0 },
         now,
         "https://x.test",
       ),
@@ -384,17 +383,31 @@ May sponsor · German required`);
   });
 
   it("links to the rest, and counts the new roles at employers that can sponsor", () => {
-    const text = channelMessage([card({ languages: null })], 3, 1, now, "https://x.test");
-    expect(text).toContain("Sponsors visa · Helps you move · €70,000–90,000 a year\n");
+    const text = channelMessage(
+      [card({ languages: null, relocation: "no" })],
+      { more: 3, week: 40, can: 1 },
+      now,
+      "https://x.test",
+    );
+    expect(text).toContain("Sponsors visa · No relocation · €70,000–90,000 a year\n");
     expect(text).toContain(
-      '<a href="https://x.test/?visa=may&amp;within=7&amp;sort=newest">3 more that sponsor or may',
+      '<a href="https://x.test/?visa=may&amp;within=7&amp;sort=newest">All 40 roles from the last week that sponsor or may</a>',
     );
     expect(text).toContain("Also new in the last day: 1 role at employers that can sponsor");
+  });
+
+  it("keeps a post within Telegram's limit, leaving the rest for the next one", () => {
+    const long = Array.from({ length: 10 }, (_, i) => card({ id: i + 1, title: "Engineer ".repeat(60) }));
+    const { roles, text } = fit(long, { week: 12, can: 0, left: 2 }, now, "https://x.test");
+    expect(text.length).toBeLessThanOrEqual(4000);
+    expect(roles.length).toBeLessThan(10);
+    expect(text).toContain("All 12 roles from the last week");
   });
 
   it("puts the roles that sponsor first, two at most from one company", () => {
     const roles = [
       card({ id: 1, visa: "may" }),
+      card({ id: 2 }),
       card({ id: 2 }),
       card({ id: 3 }),
       card({ id: 4 }),

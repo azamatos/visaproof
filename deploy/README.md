@@ -47,7 +47,8 @@ way).
 
 ## Alerts
 
-Three kinds of Telegram message (`deploy/alert.sh`, `deploy/digest.sh`, both through `deploy/telegram.sh`):
+Three kinds of Telegram message to the owner (`deploy/alert.sh`, `deploy/digest.sh`, both through
+`deploy/telegram.sh`); the public channel's post is the next section:
 
 | Message                       | When                                                                     | Says                                                                                         |
 | ----------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
@@ -78,17 +79,17 @@ The daily summary covers job boards, roles, extraction (and how many postings wa
 Once a day (`sponsored-channel`, 07:00 UTC, after the nightly extraction) the pipeline writes a post of the roles
 posted in the last week whose posting says the employer sponsors a visa or may, not posted before: ten at most, two
 at most from one company, each with its answers and a link to its page on the site, then how many more new roles
-are at employers that can sponsor (`apps/pipeline/src/channel.ts`). `deploy/channel.sh` sends it and marks it sent;
-a post that didn't get through is written again the next day, and a refusal from Telegram is an alert. No new role,
-no post. The alerts' bot posts it, as an admin of the channel. Set up by the owner:
+are at employers that can sponsor (`apps/pipeline/src/channel.ts`). Its roles count as posted once it's written;
+`deploy/channel.sh` sends it and marks it sent. If Telegram refuses it, the post is dropped and its roles go in the
+next one; if Telegram doesn't answer, they stay posted rather than risk appearing twice. Either way the owner gets an
+alert. No new role, no post. It reads the roles from the site's search, so the site must be up at 07:00. The alerts' bot posts it, as an admin of the channel. Set up by the owner:
 
 1. Create a public channel in Telegram and give it a name, e.g. `@visaproof`.
 2. Channel → Administrators → add the alerts' bot, with "Post messages".
 3. In `/srv/sponsored/.env`: `TELEGRAM_CHANNEL=@visaproof` (the channel's name).
 
 Without `TELEGRAM_CHANNEL` nothing is posted. Post now with `systemctl start sponsored-channel`; see what the next
-post would say, without sending it, with `docker compose run --rm -T pipeline channel` (it's written again before
-the next send).
+post would say, without writing or sending it, with `docker compose run --rm -T pipeline channel --dry`.
 
 ## Everyday commands (on the server)
 

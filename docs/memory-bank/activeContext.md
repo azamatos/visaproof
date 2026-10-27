@@ -57,7 +57,7 @@
 2. **A public Telegram channel** with a daily post of the new roles that say they sponsor (built:
    `deploy/README.md` → The public channel). A bot with personal alerts only if the channel draws people; no group
    for now (moderation).
-3. **Share images:** the owner doesn't like the current ones and redesigns them in Claude Design; the agent
+3. **Share images:** the owner doesn't like the current ones and redesigns them in Claude Design; _planned_: the agent
    rebuilds them from that design (`server/og/render.ts`).
 
 2026-10-25 (after a review of the project and the plan; the owner agreed with all of it):

@@ -32,6 +32,7 @@ case $name in
   backup) means="No new backup tonight. The last 7 days' backups are kept." ;;
   discover) means="No new job boards this week. The known ones are still read." ;;
   digest) means="This morning's summary wasn't sent." ;;
+  channel) means="Today's post to the public channel may be missing; the log line says what happened to its roles." ;;
   *) means="A test: nothing is wrong." ;;
 esac
 since=$now

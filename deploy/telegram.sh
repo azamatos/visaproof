@@ -1,7 +1,8 @@
 # Sourced by alert.sh and digest.sh: telegram "<html>" sends a message to the owner in Telegram's HTML (<b>, <i>,
 # <code>, <blockquote>); if Telegram refuses the markup, the same text goes again as plain text. The bot token and
 # chat id live in /srv/sponsored/.env as TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID; without them it only logs.
-value() { grep -E "^$1=" /srv/sponsored/.env 2>/dev/null | tail -1 | cut -d= -f2-; }
+# A missing key is empty, never an error (callers run with set -e and pipefail).
+value() { grep -E "^$1=" /srv/sponsored/.env 2>/dev/null | tail -1 | cut -d= -f2- || true; }
 esc() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
 plain() { sed -e 's/<[^>]*>//g' -e 's/&lt;/</g' -e 's/&gt;/>/g' -e 's/&amp;/\&/g'; }
 send() { # token chat text [parse_mode]; links never unfold into previews

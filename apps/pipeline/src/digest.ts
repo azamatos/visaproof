@@ -1,6 +1,7 @@
 import { sql } from "./db.ts";
 import { PROMPT_VERSION } from "./extract.ts";
 import { MENTIONS_RE } from "./signals.ts";
+import { count, esc, n } from "./text.ts";
 
 // The morning summary of the last 24 hours, sent to the owner on Telegram (HTML) by deploy/digest.sh. One section
 // per part of the system, each with a signal: 🟢 fine, 🟡 worth knowing, 🔴 a problem. Sections with problems come
@@ -28,9 +29,6 @@ export type Section = {
 const RANK = { ok: 0, note: 1, problem: 2 } as const;
 const DOT = { ok: "🟢", note: "🟡", problem: "🔴" } as const;
 
-const n = (x: number) => x.toLocaleString("en-US");
-const count = (k: number, one: string, many = `${one}s`) => `${n(k)} ${k === 1 ? one : many}`;
-const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 const day = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
   weekday: "short",
