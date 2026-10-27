@@ -61,6 +61,7 @@ The pipeline and the site share only the database, so either can be rebuilt with
 | `src/languages.ts`               | Languages each role requires, for every open posting.                                                                                                   |
 | `src/evaluation.ts`, `eval/`     | The 200 labelled postings, the sampler and the scorer.                                                                                                  |
 | `src/digest.ts`, `src/report.ts` | The daily Telegram summary; the numbers in `docs/findings.md`.                                                                                          |
+| `src/channel.ts`                 | The public Telegram channel's daily post of the new roles that sponsor (`deploy/channel.sh` sends it).                                                  |
 | `apps/web/server/api/`           | `roles` (search), `jobs/[id]`, `companies/[ats]/[...slug]`, `countries/[code]`, `stats`, `status`.                                                      |
 | `apps/web/shared/`               | What both sides use: answer states and labels, evidence rules (`evidence.ts`), status rules (`status.ts`), country guides (`guides.ts`), formats.       |
 | `apps/web/app/`                  | Pages, components (`ui/` are the reusable ones), composables.                                                                                           |
@@ -192,6 +193,10 @@ reloads daily. The first round covers the 100 biggest employers in each of the N
 - Every run writes `run` and `source_result`; `report` shows failures by board type.
 - **Alerts:** a failed unit, or an ingest where a board type fails as a group, sends its last log lines to the
   owner on Telegram (`deploy/alert.sh`, `deploy/README.md` → Alerts).
+- **Public channel:** a daily Telegram post of the new roles that say they sponsor a visa or may, each linking to
+  its page on the site (`src/channel.ts`, `deploy/channel.sh`, `deploy/README.md` → The public channel). It reads
+  the site's own search (`/api/roles` on the compose network), so the channel says what the site says; the
+  `channel_post` and `channel_item` tables keep any role from being posted twice.
 - Backups: nightly `pg_dump` to `/srv/sponsored/backups`, kept 7 days (`deploy/backup.sh`); the database can also
   be rebuilt from the boards in about two hours, except history (first seen, closed).
 - Requests are queued per site (`acme.recruitee.com` and `beta.recruitee.com` share one queue): 2 at a time,

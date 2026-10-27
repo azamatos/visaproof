@@ -117,7 +117,9 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
       Tools (the owner's accounts; a Domain property for `azamatos.com` already covers the subdomain, otherwise
       verifying is a DNS record or a meta tag)
 
-- [ ] README: screenshot, architecture, method, evaluation numbers, how to run
+- [x] README: screenshots, how it works, accuracy, what it's built with, how to run (2026-10-27)
+- [x] The public Telegram channel's daily post, built (2026-10-27); live once the owner creates the channel
+- [ ] Share images redesigned (owner, Claude Design), then rebuilt
 - [ ] `/method` with the measured accuracy and known limits
 - [ ] Competitors re-checked (`projectbrief.md`)
 - [ ] Shared where relocating developers are: subreddits and Telegram channels that allow it, LinkedIn (owner)

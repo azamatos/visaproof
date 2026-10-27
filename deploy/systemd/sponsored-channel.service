@@ -1,0 +1,10 @@
+[Unit]
+Description=Visaproof: post the new roles that sponsor a visa to the public Telegram channel
+After=docker.service
+Requires=docker.service
+OnFailure=sponsored-alert@%n.service
+OnSuccess=sponsored-recovered@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/srv/sponsored/src/deploy/channel.sh

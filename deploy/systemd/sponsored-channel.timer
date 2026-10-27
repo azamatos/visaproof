@@ -1,0 +1,9 @@
+[Unit]
+Description=Visaproof: the channel's daily post (07:00 UTC, after the nightly extraction)
+
+[Timer]
+OnCalendar=*-*-* 07:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

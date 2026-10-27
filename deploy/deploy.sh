@@ -52,7 +52,7 @@ caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 
 cp src/deploy/systemd/sponsored-* /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now sponsored-ingest.timer sponsored-registers.timer sponsored-discover.timer sponsored-backup.timer sponsored-digest.timer sponsored-extract.timer
+systemctl enable --now sponsored-ingest.timer sponsored-registers.timer sponsored-discover.timer sponsored-backup.timer sponsored-digest.timer sponsored-extract.timer sponsored-channel.timer
 systemctl list-timers 'sponsored-*' --no-pager
 docker compose ps web
 REMOTE

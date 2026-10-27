@@ -7,6 +7,7 @@ import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById, workdayMaintenance } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { render, summarise } from "../src/digest.ts";
+import { type Card, channelMessage, pick } from "../src/channel.ts";
 import { excerpt, locate } from "../src/extract.ts";
 import { languageExcerpt, needsReading, verify } from "../src/languages.ts";
 import { parseCsv, core } from "../src/registers.ts";
@@ -333,6 +334,73 @@ describe("digest", () => {
       ["Alerts", ["Still failing: extract, since Sat 24 Oct, 01:00 UTC"]],
     ]);
     expect(render(sections, now).split("\n")[0]).toBe("⚠️ <b>Visaproof · 8 problems</b>");
+  });
+});
+
+describe("channel", () => {
+  const card = (over: Partial<Card>): Card => ({
+    id: 1,
+    title: "Backend Engineer",
+    company: "Fjord & Co",
+    place: "Berlin, Germany",
+    workMode: "Hybrid",
+    visa: "sponsors",
+    relocation: "helps",
+    languages: [],
+    salary: "€70,000–90,000 a year",
+    ...over,
+  });
+  const now = new Date("2026-10-28T07:00:00Z");
+
+  it("lists each role with its answers and a link to its page, escaped", () => {
+    expect(
+      channelMessage(
+        [
+          card({}),
+          card({
+            id: 2,
+            title: "C++ <Engine>",
+            visa: "may",
+            relocation: "silent",
+            languages: ["german"],
+            salary: null,
+          }),
+        ],
+        0,
+        0,
+        now,
+        "https://x.test",
+      ),
+    ).toBe(`<b>New roles that sponsor a visa</b>
+Wed 28 Oct · from companies' own job boards
+
+<a href="https://x.test/jobs/1"><b>Backend Engineer</b></a>
+Fjord &amp; Co · Berlin, Germany · Hybrid
+Sponsors visa · Helps you move · English only · €70,000–90,000 a year
+
+<a href="https://x.test/jobs/2"><b>C++ &lt;Engine&gt;</b></a>
+Fjord &amp; Co · Berlin, Germany · Hybrid
+May sponsor · German required`);
+  });
+
+  it("links to the rest, and counts the new roles at employers that can sponsor", () => {
+    const text = channelMessage([card({ languages: null })], 3, 1, now, "https://x.test");
+    expect(text).toContain("Sponsors visa · Helps you move · €70,000–90,000 a year\n");
+    expect(text).toContain(
+      '<a href="https://x.test/?visa=may&amp;within=7&amp;sort=newest">3 more that sponsor or may',
+    );
+    expect(text).toContain("Also new in the last day: 1 role at employers that can sponsor");
+  });
+
+  it("puts the roles that sponsor first, two at most from one company", () => {
+    const roles = [
+      card({ id: 1, visa: "may" }),
+      card({ id: 2 }),
+      card({ id: 3 }),
+      card({ id: 4 }),
+      card({ id: 5, company: "Other" }),
+    ];
+    expect(pick(roles).map((r) => r.id)).toEqual([2, 3, 5]);
   });
 });
 
