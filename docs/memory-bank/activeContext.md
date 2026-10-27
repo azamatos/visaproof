@@ -56,7 +56,8 @@
 1. **Indexing on** now, ahead of the Thursday review (search engines take days to weeks to crawl).
 2. **A public Telegram channel**, [@visaproof](https://t.me/visaproof), with a daily post of the new roles that say
    they sponsor (`deploy/README.md` → The public channel). Created by the owner; set up and deployed 2026-10-27,
-   first post 2026-10-28 at 07:00 UTC. A bot with personal alerts only if the channel draws people; no group
+   first post 2026-10-28 at 07:00 UTC. Its layout follows an established relocation channel the owner forwarded
+   (one line per role, grouped by country, hashtags), with the visa evidence theirs lacks. A bot with personal alerts only if the channel draws people; no group
    for now (moderation).
 3. **Share images:** the owner doesn't like the current ones and redesigns them in Claude Design; _planned_: the agent
    rebuilds them from that design (`server/og/render.ts`).
@@ -79,6 +80,7 @@
   otherwise verifying is a DNS record (or a meta tag an agent adds). Bing can import the site from Search Console.
 - Thu Oct 29: review the site on a phone and a desktop.
 - The share images' design (Claude Design), then the agent rebuilds them.
+- Proposed 2026-10-27: a second, Russian-language channel from the same data (the example channel's audience).
 
 ## Next steps (in order)
 

@@ -1,6 +1,7 @@
 import type { PendingQuery, Row, Sql } from "postgres";
 import type { RelocationState, RoleCard, VisaState } from "#shared/answers";
-import { age, companyName, place, salary, WORK_MODE } from "#shared/format";
+import { COUNTRIES } from "#shared/countries";
+import { age, cityIn, companyName, place, salary, WORK_MODE } from "#shared/format";
 
 // What a job card shows, as columns of `posting p join company c join role_answer a`, and the card made from them.
 // Search, company and country pages list roles the same way.
@@ -28,15 +29,28 @@ export const cardColumns = (sql: Sql, visa: PendingQuery<Row[]> = sql`a.visa`) =
   sql`p.id::int as id, p.title, c.name, c.slug, p.location_raw, p.countries, p.work_mode, p.remote_scope,
     ${visa} as visa, a.relocation, a.languages, p.pay, ${posted(sql)} as posted`;
 
-export const toCard = (r: CardRow): RoleCard => ({
-  id: r.id,
-  title: r.title,
-  company: companyName(r.name, r.slug),
-  place: place(r.location_raw, r.countries, r.work_mode, r.remote_scope),
-  workMode: WORK_MODE[r.work_mode] ?? "",
-  visa: r.visa,
-  relocation: r.relocation,
-  languages: r.languages,
-  salary: salary(r.pay),
-  posted: age(r.posted),
-});
+export function toCard(r: CardRow): RoleCard {
+  const countries = r.countries.filter((c) => c in COUNTRIES);
+  const remote = r.work_mode === "remote";
+  return {
+    id: r.id,
+    title: r.title,
+    company: companyName(r.name, r.slug),
+    place: place(r.location_raw, r.countries, r.work_mode, r.remote_scope),
+    workMode: WORK_MODE[r.work_mode] ?? "",
+    visa: r.visa,
+    relocation: r.relocation,
+    languages: r.languages,
+    salary: salary(r.pay),
+    posted: age(r.posted),
+    countries,
+    city: remote ? "" : cityIn(r.location_raw, countries),
+    remote: !remote
+      ? null
+      : r.remote_scope === "worldwide"
+        ? "anywhere"
+        : r.remote_scope === "europe" || !countries.length
+          ? "europe"
+          : "countries",
+  };
+}

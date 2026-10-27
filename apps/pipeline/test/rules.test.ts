@@ -7,7 +7,7 @@ import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById, workdayMaintenance } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { render, summarise } from "../src/digest.ts";
-import { channelMessage, fit, pick, type Role } from "../src/channel.ts";
+import { type Card, channelMessage, fit, pick } from "../src/channel.ts";
 import { excerpt, locate } from "../src/extract.ts";
 import { languageExcerpt, needsReading, verify } from "../src/languages.ts";
 import { parseCsv, core } from "../src/registers.ts";
@@ -338,7 +338,7 @@ describe("digest", () => {
 });
 
 describe("channel", () => {
-  const role = (over: Partial<Role>): Role => ({
+  const role = (over: Partial<Card>): Card => ({
     id: 1,
     title: "Backend Engineer",
     company: "Fjord & Co",
@@ -349,9 +349,12 @@ describe("channel", () => {
     languages: [],
     salary: "€70,000–90,000 a year",
     countries: ["DE"],
+    city: "Berlin",
+    remote: null,
     ...over,
   });
   const now = new Date("2026-10-28T07:00:00Z");
+  const site = "https://x.test";
 
   it("lists the roles by country, one line each, escaped", () => {
     expect(
@@ -366,26 +369,40 @@ describe("channel", () => {
             languages: ["german"],
             salary: null,
             place: "Germany",
+            city: "",
           }),
           role({
             id: 3,
             company: "Polder",
             place: "Amsterdam, Netherlands",
             countries: ["NL"],
+            city: "Amsterdam",
             salary: null,
           }),
           role({
             id: 4,
+            company: "Duo",
+            place: "London, United Kingdom or Zurich, Switzerland",
+            countries: ["GB", "CH"],
+            city: "London",
+            salary: null,
+            relocation: "may",
+            languages: null,
+          }),
+          role({
+            id: 5,
             company: "Wide",
-            place: "Remote in 22 countries",
-            workMode: "Remote",
-            countries: ["DE", "NL", "PL", "ES"],
+            place: "Remote in Europe",
+            workMode: "",
+            countries: ["DE"],
+            city: "",
+            remote: "europe",
             salary: null,
           }),
         ],
-        { more: 0, week: 4, can: 0 },
+        { more: 0, week: 5, can: 0 },
         now,
-        "https://x.test",
+        site,
       ),
     ).toBe(`<b>New developer roles that sponsor a visa</b> · Wed 28 Oct
 Each posting says the employer sponsors a visa, or may. Tap a role for the exact sentence and where to apply.
@@ -393,37 +410,57 @@ Each posting says the employer sponsors a visa, or may. Tap a role for the exact
 
 🇩🇪 <b>Germany</b>
 • <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, Berlin · €70,000–90,000 a year ✈️
-• <a href="https://x.test/jobs/2">C++ &lt;Engine&gt;</a> · Fjord &amp; Co · 🗣 German · <i>may sponsor</i>
+• <a href="https://x.test/jobs/2">C++ &lt;Engine&gt;</a> · Fjord &amp; Co · 🗣 German · <i>may sponsor</i> · <i>no relocation</i>
 
 🇳🇱 <b>Netherlands</b>
 • <a href="https://x.test/jobs/3">Backend Engineer</a> · Polder, Amsterdam ✈️
 
-🇪🇺 <b>Several countries</b>
-• <a href="https://x.test/jobs/4">Backend Engineer</a> · Wide, Remote in 4 countries ✈️
+🗺 <b>Several countries</b>
+• <a href="https://x.test/jobs/4">Backend Engineer</a> · Duo, London, United Kingdom or Zurich, Switzerland · <i>language not checked yet</i> · <i>may help you move</i>
 
-#Germany #Netherlands`);
+🇪🇺 <b>Remote in Europe</b>
+• <a href="https://x.test/jobs/5">Backend Engineer</a> · Wide ✈️
+
+#Germany #Netherlands #RemoteEurope`);
   });
 
-  it("links to the rest, and counts the new roles at employers that can sponsor", () => {
+  it("says Remote under a country, and anywhere-remote roles get their own group", () => {
     const text = channelMessage(
-      [role({ countries: ["GB"], place: "London, United Kingdom" })],
-      { more: 3, week: 40, can: 1 },
+      [
+        role({ place: "Remote in Germany", workMode: "", city: "", remote: "countries" }),
+        role({ id: 2, place: "Remote, anywhere", workMode: "", countries: [], city: "", remote: "anywhere" }),
+      ],
+      { more: 0, week: 2, can: 0 },
       now,
-      "https://x.test",
+      site,
     );
     expect(text).toContain(
-      '🇬🇧 <b>United Kingdom</b>\n• <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, London',
+      '🇩🇪 <b>Germany</b>\n• <a href="https://x.test/jobs/1">Backend Engineer</a> · Fjord &amp; Co, Remote',
+    );
+    expect(text).toContain(
+      '🌍 <b>Remote, anywhere</b>\n• <a href="https://x.test/jobs/2">Backend Engineer</a> · Fjord &amp; Co ·',
+    );
+  });
+
+  it("links to the rest, counts the new roles at employers that can sponsor, and ends cleanly", () => {
+    const text = channelMessage(
+      [role({ countries: ["GB"], place: "London, United Kingdom", city: "London" })],
+      { more: 3, week: 40, can: 1 },
+      now,
+      site,
     );
     expect(text).toContain(
       '<a href="https://x.test/?visa=may&amp;within=7&amp;sort=newest">All 40 from the last week</a>',
     );
     expect(text).toContain("1 new role at employers on a sponsor register or paying a Blue Card salary");
     expect(text.endsWith("#UnitedKingdom")).toBe(true);
+    const bare = channelMessage([role({ countries: ["GB", "CH"] })], { more: 0, week: 1, can: 0 }, now, site);
+    expect(bare.endsWith("✈️")).toBe(true);
   });
 
   it("keeps a post within Telegram's limit, leaving the rest for the next one", () => {
     const long = Array.from({ length: 10 }, (_, i) => role({ id: i + 1, title: "Engineer ".repeat(60) }));
-    const { roles, text } = fit(long, { week: 12, can: 0, left: 2 }, now, "https://x.test");
+    const { roles, text } = fit(long, { week: 12, can: 0, left: 2 }, now, site);
     expect(text.length).toBeLessThanOrEqual(4000);
     expect(roles.length).toBeLessThan(10);
     expect(text).toContain("All 12 from the last week");

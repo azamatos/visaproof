@@ -15,6 +15,28 @@ const NOT_A_CITY = new Set(
   ].map((s) => s.toLowerCase()),
 );
 
+// A country's name in any case, its code only in capitals: "de" in "Île-de-France" isn't Germany.
+const isIn = (c: string, x: string) =>
+  new RegExp(`(?<![\\w-])${c}(?![\\w-])`).test(x) ||
+  new RegExp(`\\b(${countryName(c)}${c === "GB" ? "|UK|England|Scotland|Wales" : ""})\\b`, "i").test(x);
+// The city of a place: "Garching b. München (DE)" → "Garching b. München"; none for "Remote - Germany" or "Germany".
+const cityOf = (segment: string | undefined) => {
+  const city = (segment ?? "")
+    .replace(/\([^)]*\)/g, "")
+    .split(",")[0]
+    ?.replace(/\b(office|remote|hybrid|on-?site)\b/gi, "")
+    .replace(/^\s*[-–]|[-–(]\s*$/g, "")
+    .trim();
+  return city && !NOT_A_CITY.has(city.toLowerCase()) ? city : "";
+};
+// The city of the first listed place in one of the role's (covered) countries: "Sunnyvale, CA; London, UK" → London.
+export function cityIn(raw: string, countries: string[]): string {
+  const segments = raw.split(";").map((x) => x.trim());
+  return cityOf(
+    segments.length === 1 ? segments[0] : segments.find((x) => countries.some((c) => isIn(c, x))),
+  );
+}
+
 // "Dublin; Dublin, Dublin, Ireland" → "Dublin, Ireland"; "London, UK; Berlin, Germany" → "London, United Kingdom or
 // Berlin, Germany"; remote roles say where remote is allowed.
 export function place(raw: string, all: string[], mode: string, scope: string): string {
@@ -27,20 +49,6 @@ export function place(raw: string, all: string[], mode: string, scope: string): 
     return `Remote in ${or(names)}`;
   }
   const segments = raw.split(";").map((x) => x.trim());
-  // A country's name in any case, its code only in capitals: "de" in "Île-de-France" isn't Germany.
-  const isIn = (c: string, x: string) =>
-    new RegExp(`(?<![\\w-])${c}(?![\\w-])`).test(x) ||
-    new RegExp(`\\b(${countryName(c)}${c === "GB" ? "|UK|England|Scotland|Wales" : ""})\\b`, "i").test(x);
-  // The city of a place: "Garching b. München (DE)" → "Garching b. München"; none for "Remote" or "Germany".
-  const cityOf = (segment: string | undefined) => {
-    const city = (segment ?? "")
-      .replace(/\([^)]*\)/g, "")
-      .split(",")[0]
-      ?.replace(/\b(office|remote|hybrid|on-?site)\b/gi, "")
-      .replace(/[-–(]\s*$/, "")
-      .trim();
-    return city && !NOT_A_CITY.has(city.toLowerCase()) ? city : "";
-  };
   // Each city with its own country; a place that names neither country keeps its city: "Berlin, Germany or Austria".
   if (names.length === 2 && segments.some((x) => countries.some((c) => isIn(c, x)))) {
     return countries
@@ -50,10 +58,7 @@ export function place(raw: string, all: string[], mode: string, scope: string): 
       })
       .join(" or ");
   }
-  // The city of the first listed place in one of the role's countries: "Sunnyvale, CA; London, UK" → London.
-  const city = cityOf(
-    segments.length === 1 ? segments[0] : segments.find((x) => countries.some((c) => isIn(c, x))),
-  );
+  const city = cityIn(raw, countries);
   const where = names.length > 2 ? `${String(names.length)} countries` : or(names);
   if (!city) return where || raw;
   return where ? `${city}, ${where}` : city;

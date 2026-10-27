@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { age, place, salary } from "../shared/format";
+import { age, cityIn, place, salary } from "../shared/format";
 
 describe("place", () => {
   it("names the city and the country", () => {
@@ -47,5 +47,14 @@ describe("salary and age", () => {
     expect(age("2026-10-25T08:00:00Z", now)).toBe("Today");
     expect(age("2026-10-20T08:00:00Z", now)).toBe("5 days ago");
     expect(age("2024-01-01T00:00:00Z", now)).toBe("2 years ago");
+  });
+});
+
+describe("cityIn", () => {
+  it("finds the city in one of the role's countries, or none", () => {
+    expect(cityIn("Sunnyvale, CA; London, UK", ["GB"])).toBe("London");
+    expect(cityIn("Garching b. München (DE)", ["DE"])).toBe("Garching b. München");
+    expect(cityIn("Germany", ["DE"])).toBe("");
+    expect(cityIn("Remote - Netherlands", ["NL"])).toBe("");
   });
 });

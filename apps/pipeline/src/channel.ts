@@ -1,13 +1,13 @@
 import { sql } from "./db.ts";
-import { SCOPE } from "./location.ts";
 import { count, esc, n } from "./text.ts";
 
 // The public Telegram channel's daily post: the roles posted in the last week whose posting says the employer
 // sponsors a visa (or may), not in an earlier post, newest first; then how many new roles are at employers that
 // can sponsor (a register, a Blue Card salary). Each role links to its page on the site, which quotes the evidence
 // and links to the original: no posting text here (AGENTS.md, rule 3). The roles come from the site's own search,
-// so places, pay and answers read as they do on the site (techContext.md, decisions). deploy/channel.sh sends the
-// post, then marks it sent, or drops it when Telegram refuses it.
+// with their countries, city and remote reach, so the post groups them by country and its places, pay and answers
+// read as they do on the site (techContext.md, decisions). deploy/channel.sh sends the post, then marks it sent, or
+// drops it when Telegram refuses it.
 
 const SITE = process.env.SITE_URL ?? "https://visaproof.azamatos.com";
 // The site's server, on the compose network (SITE_API=http://localhost:4003 runs against a local site)
@@ -29,10 +29,11 @@ export type Card = {
   relocation: string;
   languages: string[] | null;
   salary: string | null;
+  countries: string[];
+  city: string;
+  remote: "anywhere" | "europe" | "countries" | null;
 };
 type Search = { total: number; pages: number; roles: Card[]; counts: { visa: Record<string, number> } };
-// With the countries it's open in, from the database: the post groups roles by country.
-export type Role = Card & { countries: string[] };
 
 const day = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
@@ -52,37 +53,63 @@ export type Tail = {
   can: number; // roles from the last day at employers that can sponsor
 };
 
-// One line per role, under its country (or "Several countries"): the title links to the role's page, then the
-// company and city, the pay, a language it needs, "may sponsor" when it only may, and ✈️ when it helps you move.
-function line(r: Role, site: string, country: string | null): string {
-  let place = r.place;
-  if (country) place = place === country ? "" : place.replace(new RegExp(`, ${country}$`), "");
-  else if (r.countries.length > 3)
-    place = `${r.workMode === "Remote" ? "Remote in" : "In"} ${String(r.countries.length)} countries`;
+// The group a role goes under: its country, remote across Europe or anywhere, or several countries.
+type Group = { key: string; head: string; tag: string | null };
+function groupOf(r: Card): Group {
+  if (r.remote === "anywhere")
+    return { key: "~anywhere", head: "🌍 <b>Remote, anywhere</b>", tag: "#RemoteAnywhere" };
+  if (r.remote === "europe")
+    return { key: "~europe", head: "🇪🇺 <b>Remote in Europe</b>", tag: "#RemoteEurope" };
+  const [code, ...more] = r.countries;
+  if (!code || more.length) return { key: "~several", head: "🗺 <b>Several countries</b>", tag: null };
+  const name = REGION.of(code) ?? code;
+  return { key: code, head: `${flag(code)} <b>${esc(name)}</b>`, tag: `#${name.replace(/[^A-Za-z]/g, "")}` };
+}
+
+// One line per role: the title links to the role's page, then the company and where (the city under a country, or
+// the site's own place under "Several countries"), the pay, its language, and what it says about a visa and moving
+// when that isn't a plain yes.
+function line(r: Card, site: string, group: Group): string {
+  const where =
+    group.key === "~several"
+      ? r.place
+      : r.remote === "countries"
+        ? "Remote"
+        : group.key.startsWith("~")
+          ? ""
+          : r.city;
   const facts = [
-    esc([r.company, place].filter(Boolean).join(", ")),
+    esc([r.company, where].filter(Boolean).join(", ")),
     r.salary ? esc(r.salary) : "",
-    r.languages?.length ? `🗣 ${esc(r.languages.map(capital).join(", "))}` : "",
+    r.languages === null
+      ? "<i>language not checked yet</i>"
+      : r.languages.length
+        ? `🗣 ${esc(r.languages.map(capital).join(", "))}`
+        : "",
     r.visa === "may" ? "<i>may sponsor</i>" : "",
+    r.relocation === "may" ? "<i>may help you move</i>" : r.relocation === "no" ? "<i>no relocation</i>" : "",
   ].filter(Boolean);
   return `• <a href="${site}/jobs/${String(r.id)}">${esc(r.title)}</a> · ${facts.join(" · ")}${r.relocation === "helps" ? " ✈️" : ""}`;
 }
 
-// The post in Telegram's HTML: the roles by country, most roles first, roles open in several countries last.
-export function channelMessage(roles: Role[], tail: Tail, now = new Date(), site = SITE): string {
-  const groups = new Map<string, Role[]>();
+// The post in Telegram's HTML: the roles by country, the countries with most roles first, then remote and several
+// countries.
+export function channelMessage(roles: Card[], tail: Tail, now = new Date(), site = SITE): string {
+  const groups = new Map<string, { group: Group; roles: Card[] }>();
   for (const r of roles) {
-    const key = r.countries.length === 1 ? (r.countries[0] ?? "") : "";
-    groups.set(key, [...(groups.get(key) ?? []), r]);
+    const group = groupOf(r);
+    const g = groups.get(group.key) ?? { group, roles: [] };
+    g.roles.push(r);
+    groups.set(group.key, g);
   }
-  const ordered = [...groups].sort(([a, x], [b, y]) => (a ? 0 : 1) - (b ? 0 : 1) || y.length - x.length);
-  const tags: string[] = [];
-  const sections = ordered.map(([code, rs]) => {
-    const name = code ? (REGION.of(code) ?? code) : null;
-    if (name) tags.push(`#${name.replace(/[^A-Za-z]/g, "")}`);
-    const head = name ? `${flag(code)} <b>${esc(name)}</b>` : "🇪🇺 <b>Several countries</b>";
-    return [head, ...rs.map((r) => line(r, site, name))].join("\n");
-  });
+  const last = (key: string) => (key.startsWith("~") ? 1 : 0);
+  const ordered = [...groups.values()].sort(
+    (a, b) => last(a.group.key) - last(b.group.key) || b.roles.length - a.roles.length,
+  );
+  const sections = ordered.map(({ group, roles: rs }) =>
+    [group.head, ...rs.map((r) => line(r, site, group))].join("\n"),
+  );
+  const tags = ordered.flatMap(({ group }) => (group.tag ? [group.tag] : []));
   const tail_ = [
     tail.more
       ? `<a href="${site}/?visa=may&amp;within=7&amp;sort=newest">All ${n(tail.week)} from the last week</a>`
@@ -95,12 +122,12 @@ export function channelMessage(roles: Role[], tail: Tail, now = new Date(), site
   return [
     `<b>New developer roles that sponsor a visa</b> · ${day.format(now)}\nEach posting says the employer sponsors a visa, or may. Tap a role for the exact sentence and where to apply.\n✈️ helps you move · 🗣 a local language needed`,
     ...sections,
-    tail_.join("\n"),
+    ...(tail_.length ? [tail_.join("\n")] : []),
   ].join("\n\n");
 }
 
 // "Sponsors" before "may", newest first within each, at most PER_COMPANY from one company, each role once.
-export function pick<T extends Card>(fresh: T[]): T[] {
+export function pick(fresh: Card[]): Card[] {
   const order = (r: Card) => (r.visa === "sponsors" ? 0 : 1);
   const seen = new Set<number>();
   const from = new Map<string, number>();
@@ -118,7 +145,7 @@ export function pick<T extends Card>(fresh: T[]): T[] {
 
 // The longest post within Telegram's limit: roles come off the end until it fits. `left`: roles not picked at all.
 export function fit(
-  roles: Role[],
+  roles: Card[],
   tail: Omit<Tail, "more"> & { left: number },
   now = new Date(),
   site = SITE,
@@ -156,17 +183,8 @@ export async function channel(dry = false) {
       if (!posted.has(r.id)) fresh.set(r.id, r);
   const picked = pick([...fresh.values()]);
   if (!picked.length) return;
-  const where = new Map(
-    (
-      await sql<{ id: number; countries: string[] | null }[]>`
-        select id::int as id, countries from posting where id in ${sql(picked.map((r) => r.id))}`
-    ).map((r) => [r.id, (r.countries ?? []).filter((c) => SCOPE.has(c))]),
-  );
   const can = (await search("visa=can&within=1")).counts.visa.can ?? 0;
-  const { roles, text } = fit(
-    picked.map((r) => ({ ...r, countries: where.get(r.id) ?? [] })),
-    { week: first.total, can, left: fresh.size - picked.length },
-  );
+  const { roles, text } = fit(picked, { week: first.total, can, left: fresh.size - picked.length });
   if (dry) {
     console.log(text);
     return;
