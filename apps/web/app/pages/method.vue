@@ -64,7 +64,7 @@ const SECTIONS = [
   { id: "companies", label: "For companies" },
 ];
 
-useSeoMeta({
+usePageSeo({
   title: "How it works",
   description:
     "How Visaproof reads job boards and registers, how accurate its visa answers are, and what it can't do.",

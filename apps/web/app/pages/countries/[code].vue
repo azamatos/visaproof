@@ -39,13 +39,15 @@ const tables = computed(() =>
 const checkedOn = computed(() => day(country.value?.rules[0]?.checkedOn));
 const search = computed(() => ({ path: "/", query: { country: code.value } }));
 
-useSeoMeta({
+usePageSeo({
   title: () =>
     country.value ? `Developer jobs in ${country.value.name}` : notFound.value ? "Not found" : "Country",
   description: () =>
     country.value
       ? `${n(country.value.open)} developer roles in ${country.value.name}${guide.value ? `, and how developers get a work permit there (${guide.value.route})` : ""}.`
       : undefined,
+  image: () => `countries/${code.value.toLowerCase()}`,
+  index: () => !!country.value,
 });
 </script>
 

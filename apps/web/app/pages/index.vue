@@ -34,9 +34,28 @@ const sort = computed({
   set: (v: (typeof SORTS)[number]["value"]) => set({ sort: v === "newest" ? "newest" : undefined }),
 });
 
-useSeoMeta({
+// The search without filters is the page for search engines; every filtered search points to it.
+usePageSeo({
   description:
-    "Software developer jobs in Europe with the visa answer first: whether the employer sponsors, quoted from the posting or the official register.",
+    "Software developer jobs in Europe with the visa answer first: whether the employer sponsors a visa, quoted from the posting or the official sponsor register.",
+  index: () => !Object.keys(route.query).length,
+  path: "/",
+});
+const { siteUrl } = useRuntimeConfig().public;
+useHead({
+  // The site's name in search results
+  script: [
+    {
+      type: "application/ld+json",
+      innerHTML: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "Visaproof",
+        alternateName: "visaproof.azamatos.com",
+        url: `${siteUrl}/`,
+      }),
+    },
+  ],
 });
 </script>
 

@@ -63,7 +63,7 @@ function back(e: MouseEvent) {
   }
 }
 
-useSeoMeta({
+usePageSeo({
   title: () =>
     job.value
       ? `${job.value.title} at ${job.value.company.name}`
@@ -74,6 +74,11 @@ useSeoMeta({
     job.value
       ? `${job.value.title} at ${job.value.company.name}, ${job.value.place}: ${VISA_LABEL[job.value.visa].toLowerCase()}, with the evidence.`
       : undefined,
+  image: () => `jobs/${String(route.params.id)}`,
+  imageAlt: () =>
+    job.value ? `${job.value.title} at ${job.value.company.name}: ${VISA_LABEL[job.value.visa]}` : undefined,
+  // A closed role stays reachable for links people kept, but isn't a search result.
+  index: () => !!job.value && !job.value.closedAt,
 });
 </script>
 

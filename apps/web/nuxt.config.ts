@@ -21,14 +21,30 @@ export default defineNuxtConfig({
       meta: [
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         { name: "color-scheme", content: "dark light" },
+        { name: "theme-color", content: "#010101", media: "(prefers-color-scheme: dark)" },
+        { name: "theme-color", content: "#f7f7f5", media: "(prefers-color-scheme: light)" },
+        { property: "og:site_name", content: "Visaproof" },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: "en_GB" },
+        // X still needs this for the large share image (unhead's typed field for it is deprecated)
+        { name: "twitter:card", content: "summary_large_image" },
       ],
-      link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
+      link: [
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      ],
     },
   },
   runtimeConfig: {
     databaseUrl: "postgres://sponsored@localhost:5433/sponsored",
-    // Where "Report a wrong answer" and removal requests go (NUXT_PUBLIC_CORRECTIONS_EMAIL)
-    public: { correctionsEmail: "hi@azamatos.com" },
+    public: {
+      // Where "Report a wrong answer" and removal requests go (NUXT_PUBLIC_CORRECTIONS_EMAIL)
+      correctionsEmail: "hi@azamatos.com",
+      // Canonical links, share images and sitemaps point here (NUXT_PUBLIC_SITE_URL)
+      siteUrl: "https://visaproof.azamatos.com",
+      // Off by default, so local runs and tests say noindex everywhere; the server turns it on (NUXT_PUBLIC_INDEXABLE)
+      indexable: false,
+    },
   },
   // The data changes every 6 hours at most: answers are kept for 5 minutes per URL, in a bounded cache so many
   // different searches can't fill the memory. No stale-while-revalidate: Nitro would serve an entry of any age to
@@ -56,6 +72,11 @@ export default defineNuxtConfig({
       },
       "/api/**": { cache: { maxAge: 300, swr: false } },
       "/api/status": { cache: { maxAge: 60, swr: false } },
+      // Sitemaps change with every read of the job boards (6 hours); an hour is fresh enough.
+      "/sitemap.xml": { cache: { maxAge: 3600, swr: false } },
+      "/sitemap-pages.xml": { cache: { maxAge: 3600, swr: false } },
+      "/sitemap-companies.xml": { cache: { maxAge: 3600, swr: false } },
+      "/sitemap-jobs.xml": { cache: { maxAge: 3600, swr: false } },
     },
   },
   nitro: {

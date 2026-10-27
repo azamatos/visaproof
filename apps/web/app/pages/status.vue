@@ -10,7 +10,7 @@ const DOT: Record<State, string> = {
   unknown: "border border-muted",
 };
 
-useSeoMeta({
+usePageSeo({
   title: "Status",
   description:
     "Is Visaproof's data fresh: when the job boards, the registers and the postings were last read.",
