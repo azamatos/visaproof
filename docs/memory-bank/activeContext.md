@@ -54,8 +54,9 @@
 2026-10-27:
 
 1. **Indexing on** now, ahead of the Thursday review (search engines take days to weeks to crawl).
-2. **A public Telegram channel** with a daily post of the new roles that say they sponsor (built:
-   `deploy/README.md` → The public channel). A bot with personal alerts only if the channel draws people; no group
+2. **A public Telegram channel**, [@visaproof](https://t.me/visaproof), with a daily post of the new roles that say
+   they sponsor (`deploy/README.md` → The public channel). Created by the owner; set up and deployed 2026-10-27,
+   first post 2026-10-28 at 07:00 UTC. A bot with personal alerts only if the channel draws people; no group
    for now (moderation).
 3. **Share images:** the owner doesn't like the current ones and redesigns them in Claude Design; _planned_: the agent
    rebuilds them from that design (`server/og/render.ts`).
@@ -77,8 +78,6 @@
   `https://visaproof.azamatos.com/sitemap.xml`. A Domain property for `azamatos.com` already covers the subdomain;
   otherwise verifying is a DNS record (or a meta tag an agent adds). Bing can import the site from Search Console.
 - Thu Oct 29: review the site on a phone and a desktop.
-- The Telegram channel: create it, add the alerts' bot as an admin, put `TELEGRAM_CHANNEL=@<name>` in the
-  server's `.env` (`deploy/README.md` → The public channel). Posts start the next morning at 07:00 UTC.
 - The share images' design (Claude Design), then the agent rebuilds them.
 
 ## Next steps (in order)

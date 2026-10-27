@@ -118,7 +118,8 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
       verifying is a DNS record or a meta tag)
 
 - [x] README: screenshots, how it works, accuracy, what it's built with, how to run (2026-10-27)
-- [x] The public Telegram channel's daily post, built (2026-10-27); live once the owner creates the channel
+- [x] The public Telegram channel, [@visaproof](https://t.me/visaproof): a daily post of the new roles that sponsor,
+      deployed 2026-10-27, first post 2026-10-28 at 07:00 UTC
 - [ ] Share images redesigned (owner, Claude Design), then rebuilt
 - [ ] `/method` with the measured accuracy and known limits
 - [ ] Competitors re-checked (`projectbrief.md`)
