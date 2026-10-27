@@ -63,6 +63,8 @@ services:
     restart: unless-stopped
     environment:
       NUXT_DATABASE_URL: postgres://site:${WEB_DB_PASSWORD:-}@db:5432/sponsored
+      # Search engines may index the site (since 2026-10-27); INDEXABLE=false in .env takes it out of search again
+      NUXT_PUBLIC_INDEXABLE: ${INDEXABLE:-true}
     depends_on:
       db:
         condition: service_healthy

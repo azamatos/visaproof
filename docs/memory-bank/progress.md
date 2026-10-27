@@ -1,6 +1,6 @@
 # Roadmap
 
-**Updated 2026-10-26.** Target: **MVP live on Friday 2026-10-30**. The design came early (2026-10-23) and the
+**Updated 2026-10-27.** Target: **MVP live on Friday 2026-10-30**. The design came early (2026-10-23) and the
 extractor clears the bar on the owner's subscription, so from Monday the site is built straight to the design.
 Public launch (sharing it) follows when the owner is happy with it.
 
@@ -12,12 +12,12 @@ Public launch (sharing it) follows when the owner is happy with it.
 | Sat Oct 24 | Done: cron fixes, clearer Telegram messages, register review (200 employers), official amounts, language check, `role_answer`, the site's search page (live search, filters, themes), the preview deployed (noindex) | Done: design decisions, hosting confirmed, DNS record                    |
 | Sun Oct 25 | Done: the review's fixes (board dates, technology search, per-country "Can sponsor"), job page, Method, Status, company and country pages, company names, browser tests in CI, CSP, docs                             | Done: decided search matching, names, country pages, corrections address |
 | Mon Oct 26 | Done: code review (15 fixes), merged (PR #1) and deployed; Lighthouse on production 96–100. Next: spot-check corrections                                                                                             | Spot-check about 20 register reviews and the flagged names (15 minutes)  |
-| Tue Oct 27 | `docs/learning/` notes; more boards that post for others                                                                                                                                                             | —                                                                        |
+| Tue Oct 27 | Done: share images, sitemaps, robots, canonical links; indexing on. Next: `docs/learning/` notes; more boards that post for others                                                                                   | —                                                                        |
 | Wed Oct 28 | Polish                                                                                                                                                                                                               | —                                                                        |
 | Thu Oct 29 | Fixes from the owner's review                                                                                                                                                                                        | Review the preview on a phone and a desktop                              |
 | Fri Oct 30 | MVP done                                                                                                                                                                                                             | —                                                                        |
 
-Every deploy updates the preview at visaproof.azamatos.com; `noindex` stays until the public launch.
+Every deploy updates the site at visaproof.azamatos.com, open to search engines since 2026-10-27.
 
 ## Status
 
@@ -27,8 +27,8 @@ Every deploy updates the preview at visaproof.azamatos.com; `noindex` stays unti
 | M0 Setup and real data                         | Oct 23   | done 2026-10-23                                                |
 | M1 Evidence: extraction, evaluation, registers | Oct 25   | done except the backfills (nightly) and the owner's spot-check |
 | M2 Design (owner, Claude Design)               | Oct 27   | done 2026-10-23; decisions 2026-10-24                          |
-| M3 Site                                        | Oct 30   | built 2026-10-25, deployed 2026-10-26 (preview, `noindex`)     |
-| M4 Launch                                      | November | when the owner is happy with the MVP                           |
+| M3 Site                                        | Oct 30   | built 2026-10-25, deployed 2026-10-26, indexed from 2026-10-27 |
+| M4 Launch                                      | November | indexing on 2026-10-27; sharing when the owner is happy        |
 | M5 After launch                                | —        | later                                                          |
 
 ## M0: setup and real data (done 2026-10-23)
@@ -107,7 +107,15 @@ register status is confirmed for the top companies.
 
 Done when a visitor can find visa-friendly roles, see why each answer was given, and click through to apply.
 
-## M4: launch (November, when the owner is happy)
+## M4: launch (indexing on 2026-10-27; sharing when the owner is happy)
+
+- [x] Ready for search engines and link previews: share images, sitemaps, canonical links, robots, the site's
+      name (2026-10-27)
+- [x] Indexing on (owner, 2026-10-27): `INDEXABLE` is on in `deploy/compose.yml` (`INDEXABLE=false` in the
+      server's `.env` turns it off)
+- [ ] The sitemap (`https://visaproof.azamatos.com/sitemap.xml`) added in Google Search Console and Bing Webmaster
+      Tools (the owner's accounts; a Domain property for `azamatos.com` already covers the subdomain, otherwise
+      verifying is a DNS record or a meta tag)
 
 - [ ] README: screenshot, architecture, method, evaluation numbers, how to run
 - [ ] `/method` with the measured accuracy and known limits
@@ -153,3 +161,6 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
   inside "Île-de-France", stale-while-revalidate hiding the stale notice, status counting failed runs as on time,
   company pages limited to 50 roles, and smaller ones), CI green, merged and deployed. Lighthouse on a phone in
   production: performance 96–100, accessibility 100.
+- 2026-10-27: search engines and link previews: a share image for every page (the role's, company's or country's
+  own), sitemaps of the open roles, companies and countries, canonical links, robots.txt, the site's name in search
+  results. The owner decided to open indexing now; on from 2026-10-27.
