@@ -9,7 +9,7 @@ WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/pipeline/package.json apps/pipeline/
-RUN pnpm install --frozen-lockfile --prod --filter @sponsored/pipeline
+RUN pnpm install --frozen-lockfile --prod --filter @visaproof/pipeline
 COPY apps/pipeline apps/pipeline
 WORKDIR /app/apps/pipeline
 USER node

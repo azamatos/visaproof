@@ -70,6 +70,9 @@
   `https://visaproof.azamatos.com/sitemap.xml`. A Domain property for `azamatos.com` already covers the subdomain;
   otherwise verifying is a DNS record (or a meta tag an agent adds). Bing can import the site from Search Console.
 - Thu Oct 29: review the site on a phone and a desktop.
+- Proposed 2026-10-27: a public Telegram channel with one post a day of the new roles that say they sponsor (title,
+  company, place, the visa answer and a link to the role's page; no posting text), an RSS feed of the same, and a
+  bot with personal alerts later if the channel draws people. Waiting for the owner's decision.
 
 ## Next steps (in order)
 

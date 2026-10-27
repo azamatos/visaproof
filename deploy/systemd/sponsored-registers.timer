@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: reload the sponsor registers and match companies (*-*-* 03:40:00 UTC)
+Description=Visaproof: reload the sponsor registers and match companies (*-*-* 03:40:00 UTC)
 
 [Timer]
 OnCalendar=*-*-* 03:40:00 UTC

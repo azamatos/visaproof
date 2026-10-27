@@ -1,6 +1,7 @@
 # Labelled set
 
-200 open postings from discovered boards, labelled by hand, to measure the rules and the language model. Drawn
+200 open postings from discovered boards, labelled by agents following the guide below (separately from the
+extractor), to measure the rules and the language model. Drawn
 2026-10-23 with `node src/cli.ts eval-sample`, in four strata (`strata.json`): what the rules say (offers, refuses),
 and, where they say nothing, whether the text mentions visas or relocation at all. One posting per company per
 stratum.

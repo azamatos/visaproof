@@ -3,9 +3,10 @@
 Visa-friendly developer jobs in Europe, with the evidence for every answer:
 [visaproof.azamatos.com](https://visaproof.azamatos.com).
 
-> **Status: live.** The data pipeline runs every 6 hours and the site is open to search engines since
-> 2026-10-27: search, job pages with the evidence, company and country pages, method and status. The repo keeps
-> its working name, `sponsored`.
+![Search: roles in Germany whose posting says the employer sponsors a visa](docs/images/search.png)
+
+> **Live** since 2026-10-24, open to search engines since 2026-10-27. On 2026-10-27: about 15,000 open developer
+> roles in the EU, EEA, UK and Switzerland at 2,500 companies, found on 16,000 companies' own job boards.
 
 A free job finder for software developers who need a visa to work in Europe. It reads open roles straight from
 companies' own job boards and answers the questions a relocating developer asks first, with proof:
@@ -18,6 +19,11 @@ companies' own job boards and answers the questions a relocating developer asks 
   the salary clears the threshold. The site checks what it can and says what it can't.
 - **Do I need the local language?** "German required" is pulled out of the posting, so you can filter it away.
 - **Is it still open?** Every role is re-checked against the company's board several times a day.
+
+Every answer shows where it comes from: the quote, the register entry or the salary rule, with its source and the
+date it was checked. "Unknown" is a valid answer; nothing is guessed from a company's size or reputation.
+
+![A role: the four answers on top, and where each one comes from](docs/images/job.png)
 
 ## How it works
 
@@ -41,12 +47,36 @@ Personio, Recruitee, Workable, Workday)                            (finds new bo
 3. Employers are matched against the official registers.
 4. A language model (Claude Opus 5.5) reads each new or changed posting that mentions visas, permits or relocation
    and returns the facts with quotes; a quote that isn't word for word in the posting is dropped. A second pass
-   (Claude Sonnet 5.5) checks every posting for the languages it requires. A hand-labelled set of 200 postings
-   measures both, and the numbers are on the site's Method page.
+   (Claude Sonnet 5.5) checks every posting for the languages it requires. A labelled set of 200 postings measures
+   both, and the numbers are on the site's Method page.
 5. Each posting's technologies are recognised from a dictionary with aliases (Go = Golang, k8s = Kubernetes), so
    search finds "C++" and ".NET" and never mixes up Java and JavaScript.
 
-What the first runs found is in [docs/findings.md](docs/findings.md).
+## How accurate it is
+
+Measured on a labelled set (`apps/pipeline/eval`): 200 postings drawn at random in four groups and labelled
+separately from the extractor, by agents following one written guide. The model is only given postings that
+mention visas, permits or relocation: 161 of the 200.
+
+| Who reads the posting                     | "Sponsors a visa": precision / recall | "Won't sponsor": precision / recall |
+| ----------------------------------------- | ------------------------------------- | ----------------------------------- |
+| Keyword rules (the baseline)              | 33% / 90%                             | 90% / 37%                           |
+| Claude Opus 5.5 (in use), quotes verified | **100% / 100%**                       | 98% / 96%                           |
+
+The bar was 95% precision for "sponsors": a wrong "yes" costs a visa applicant the most. The sample is small (22
+postings offer a visa), so a perfect score still means about 85% at the low end of a 95% interval. The language
+check gets 200 of 200 postings right. Every quote is checked word for word against the posting, and none has had
+to be dropped. The details, and what the first runs found: [docs/findings.md](docs/findings.md).
+
+## Built with
+
+- **Pipeline:** Node 22 and TypeScript (run directly, no build), Postgres 18, DuckDB over Common Crawl's index,
+  Claude Code in print mode for the language model, Docker and systemd timers on one small server, alerts on
+  Telegram.
+- **Site:** Nuxt 4 (Vue 3, server-rendered), Tailwind CSS 4, own components on Reka UI, share images drawn with
+  Satori and resvg, behind Caddy and Cloudflare.
+- **Quality:** TypeScript strict, ESLint (`strictTypeChecked`), Prettier, Vitest, Playwright with axe on a phone
+  and a desktop in both themes, GitHub Actions. Lighthouse on a phone: performance 96–100, accessibility and SEO 100.
 
 ## What it isn't
 
@@ -60,7 +90,7 @@ Needs Node 22.18+, pnpm 10 and a Postgres database (18 on the server).
 
 ```sh
 pnpm install
-export DATABASE_URL=postgres://user:pass@localhost:5432/sponsored
+export DATABASE_URL=postgres://user:pass@localhost:5432/visaproof
 cd apps/pipeline
 node src/cli.ts migrate
 node src/cli.ts seed boards.json          # [{ "ats": "greenhouse", "slug": "example" }, …]

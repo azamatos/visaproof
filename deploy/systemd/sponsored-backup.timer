@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: dump the database (daily 02:50 UTC)
+Description=Visaproof: dump the database (daily 02:50 UTC)
 
 [Timer]
 OnCalendar=*-*-* 02:50:00 UTC

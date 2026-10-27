@@ -1,4 +1,4 @@
-# Sponsored on a small Docker server: its own Postgres, the pipeline and the site, no public ports (the shared Caddy
+# Visaproof on a small Docker server: its own Postgres, the pipeline and the site, no public ports (the shared Caddy
 # in /srv/edge serves the site).
 # Lives at /srv/sponsored (code in src/, secrets in .env, never in git). Deploy and timers: deploy/README.md.
 name: sponsored

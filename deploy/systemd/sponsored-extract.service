@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: read new postings with Claude Code (owner's subscription): visas, then languages
+Description=Visaproof: read new postings with Claude Code (owner's subscription): visas, then languages
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service

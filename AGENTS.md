@@ -32,7 +32,7 @@ country pages, Method, Status) is live and open to search engines, with share im
 ```sh
 pnpm install
 pnpm typecheck && pnpm lint && pnpm format:check && pnpm test   # what CI runs
-pnpm --filter @sponsored/pipeline cli <command>                  # against DATABASE_URL (default: the local copy below)
+pnpm --filter @visaproof/pipeline cli <command>                  # against DATABASE_URL (default: the local copy below)
 pnpm --filter web dev                                            # the site on http://localhost:4003
 ```
 

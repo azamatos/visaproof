@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: reload the sponsor registers and match companies
+Description=Visaproof: reload the sponsor registers and match companies
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service

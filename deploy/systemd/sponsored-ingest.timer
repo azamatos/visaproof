@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: read the job boards that are due (*-*-* 00/6:20:00 UTC)
+Description=Visaproof: read the job boards that are due (*-*-* 00/6:20:00 UTC)
 
 [Timer]
 OnCalendar=*-*-* 00/6:20:00 UTC

@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: read the job boards that are due
+Description=Visaproof: read the job boards that are due
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service

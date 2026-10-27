@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: tell the owner that %i failed
+Description=Visaproof: tell the owner that %i failed
 
 [Service]
 Type=oneshot
