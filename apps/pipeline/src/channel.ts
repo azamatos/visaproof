@@ -43,7 +43,8 @@ const day = new Intl.DateTimeFormat("en-GB", {
 const REGION = new Intl.DisplayNames(["en"], { type: "region" });
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 // "DE" → 🇩🇪
-const flag = (code: string) => String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+const flag = (code: string) =>
+  String.fromCodePoint(0x1f1a5 + code.charCodeAt(0), 0x1f1a5 + code.charCodeAt(1));
 
 export type Tail = {
   more: number; // roles from the week that sponsor or may, not in this post or an earlier one
