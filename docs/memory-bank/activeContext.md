@@ -1,6 +1,6 @@
 # Active context
 
-**Updated 2026-10-26.** Read this first. The next session starts with "Next steps" below.
+**Updated 2026-10-27.** Read this first. The next session starts with "Next steps" below.
 
 ## Where things stand
 
@@ -16,9 +16,13 @@
   job page with the evidence panel and "Report a wrong answer" (an email to `hi@azamatos.com`), company pages,
   country pages (full permit guides for Germany, the Netherlands and the UK; "not researched yet" elsewhere),
   Method, Status with a stale-data notice on every page, a 404 page, a content security policy, API caching.
-  Live at visaproof.azamatos.com, still `noindex`.
-- **Tests:** pipeline unit tests (65), site unit tests (20), browser tests with Playwright and axe on a phone and a
-  desktop (51, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
+  Live at visaproof.azamatos.com.
+- **Search engines** (2026-10-27): a share image for every page (the role's, company's or country's own, drawn
+  from the data), sitemaps (about 15,000 open roles, 2,500 companies, the countries), canonical links, robots.txt.
+  Indexing is on since 2026-10-27 (`deploy/compose.yml`). No JobPosting markup: Google wants the posting's full
+  text in it, and we don't republish postings.
+- **Tests:** pipeline unit tests (65), site unit tests (23), browser tests with Playwright and axe on a phone and a
+  desktop (59, against `e2e/seed.sql`); CI's `browser` job runs them with Postgres 18.
 - **Lighthouse on a phone, production** (2026-10-26): performance search 100, job 98, company 96, Germany 99,
   Status 97; accessibility 100; SEO 63 is the intended `noindex`. Best practices 96 only because this Mac's DNS
   blocks Cloudflare's analytics script (a console error in the test, not on a visitor's phone).
@@ -46,6 +50,8 @@
    (`UiSelect`). Rules in `techContext.md` → Website.
 4. **Preview:** published now, with `noindex` until the public launch.
 
+2026-10-27: **Indexing on** now, ahead of the Thursday review (search engines take days to weeks to crawl).
+
 2026-10-25 (after a review of the project and the plan; the owner agreed with all of it):
 
 1. **Search matches** the title, the company and a list of technologies recognised in each posting (a dictionary
@@ -59,19 +65,23 @@
 
 ## Waiting for the owner
 
-- Thu Oct 29: review the preview on a phone and a desktop.
+- Google Search Console and Bing Webmaster Tools: add the site and submit
+  `https://visaproof.azamatos.com/sitemap.xml`. A Domain property for `azamatos.com` already covers the subdomain;
+  otherwise verifying is a DNS record (or a meta tag an agent adds). Bing can import the site from Search Console.
+- Thu Oct 29: review the site on a phone and a desktop.
 
 ## Next steps (in order)
 
-1. The owner's spot-check (2026-10-26) is written into `reviews/` (24 register reviews and 8 names confirmed,
-   Featherless renamed, Talan now "not listed"): load it on the server after the deploy
-   (`docker compose run --rm -T pipeline reviews reviews/registers.jsonl`; `deploy.sh` loads the names). Method for
-   later reviews: the register first; when unsure, the company's site (the board's logo links to it), then decide.
+1. Once the owner has added the site to Search Console: what Google indexes (its Pages report). Closed roles
+   should drop out; short job pages may stay "crawled, not indexed", the company and country pages matter more.
 2. Boards that post for others beyond the 6 flagged: find more (staffing agencies, aggregators), and decide whether
    their register answers should count at all.
 3. `docs/learning/` notes for the owner (Nuxt and Vue concepts as they appear in the code).
 4. Polish from the owner's Thursday review.
 5. Update this file and `progress.md`.
+
+Method for register and name reviews: the register first; when unsure, the company's site (the board's logo links
+to it), then decide (`reviews/README.md`).
 
 ## Open questions
 

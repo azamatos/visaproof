@@ -1,7 +1,7 @@
 # Product spec
 
-Updated 2026-10-25. The agreed behaviour for the MVP; "later" items are in `progress.md`. The pipeline and the
-site are built; the site is a preview until the public launch.
+Updated 2026-10-27. The agreed behaviour for the MVP; "later" items are in `progress.md`. The pipeline and the
+site are built; the site is live and open to search engines since 2026-10-27.
 
 ## Who uses it
 

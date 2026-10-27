@@ -1,8 +1,8 @@
 # Technical plan
 
-**Updated 2026-10-25.** Built: the pipeline (ingest, registers, discovery, extraction, language check,
+**Updated 2026-10-27.** Built: the pipeline (ingest, registers, discovery, extraction, language check,
 technologies, alerts) on the server, and the site (search, job, company and country pages, method, status), live
-as a `noindex` preview. Planned: what `progress.md` lists after the MVP.
+and open to search engines since 2026-10-27. Planned: what `progress.md` lists after the MVP.
 
 ## Shape
 
@@ -40,6 +40,9 @@ The pipeline and the site share only the database, so either can be rebuilt with
 | API answers cached 5 minutes per URL (status 60 s) in a bounded LRU, in production only            | The data changes every 6 hours at most; a bounded cache can't be filled by many different searches              | No cache, or Cloudflare cache rules (a DNS-side change)                                              |
 | "Report a wrong answer" is an email from the visitor's mail app to the corrections address         | The site's database user only reads; no form endpoint, no mail service, no stored personal data                 | A form that writes to the database                                                                   |
 | Visa mentions kept per posting as a generated column (`posting.mentions`)                          | Counting them ran the pattern over every text (3.3 s); now 0.09 s                                               | The pattern at query time                                                                            |
+| Share images drawn by the site itself (Satori + resvg, `server/og/render.ts`)                      | One per role, company and country from the same API answers; about 0.15 s each, cached a day by Cloudflare      | nuxt-og-image (more moving parts on Nuxt 4 and Vite 8), or one static image for every page           |
+| No JobPosting structured data                                                                      | Google wants the posting's full text in it, and the site doesn't republish postings (AGENTS.md rule 3)          | JobPosting markup with a summary (risks being treated as incomplete or spammy markup)                |
+| Indexing is one setting in the site (`NUXT_PUBLIC_INDEXABLE`, on in `deploy/compose.yml`)          | The robots header, meta tag and robots.txt follow it together, and the browser tests check the "off" state      | The X-Robots-Tag line in the Caddy file                                                              |
 
 ## Packages
 
@@ -168,6 +171,15 @@ reloads daily. The first round covers the 100 biggest employers in each of the N
   functions in `shared/`, with unit tests.
 - **Caching:** API answers 5 minutes per URL (status 60 s) in a bounded LRU, in production only. No
   stale-while-revalidate: Nitro would serve an entry of any age to the first visitor after a quiet spell.
+- **Search engines and link previews** (`shared/seo.ts`, `app/composables/usePageSeo.ts`): every page has a
+  title, a description, a canonical link (searches with filters point to `/`, company pages keep `?page=`), Open
+  Graph and X tags and a share image under `/og/` (the site's, or the role's, company's or country's own). Closed
+  roles, company pages with no open roles, filtered searches and 404s say `noindex`. Sitemaps (`/sitemap.xml` →
+  pages, companies, jobs) list only open roles and the companies and countries that have them; robots.txt keeps
+  crawlers out of `/api/`. The home page names the site for search results (WebSite in JSON-LD). Indexing is on
+  on the server since 2026-10-27; with it off (the default, so local runs and tests) every page and response says
+  `noindex, nofollow`. Lighthouse SEO 100 with it on
+  (2026-10-27, local build).
 - **Learning notes:** `docs/learning/`, one short note per concept the first time it appears in the code (the
   owner learns Nuxt and Vue from this codebase). _Planned._
 - **Hosting:** on the same server in Docker behind its Caddy front door, Cloudflare proxying the domain; it reads
@@ -190,6 +202,6 @@ reloads daily. The first round covers the 100 biggest employers in each of the N
 - Pipeline (Vitest): rules (`test/rules.test.ts`), including the technology matcher and the SQL pattern; each
   adapter against a saved real response (`test/fixtures`).
 - Site (Vitest): formats, search patterns, evidence and status rules (`apps/web/test`).
-- Browser (Playwright + axe, `apps/web/e2e`): search, job, company, country, method, status and 404 pages on a phone
-  and a desktop, against a test database of made-up roles built by the pipeline's own migrations. CI runs them
+- Browser (Playwright + axe, `apps/web/e2e`): search, job, company, country, method, status and 404 pages, the
+  share images, sitemaps and robots (`seo.spec.ts`) on a phone and a desktop, against a test database of made-up roles built by the pipeline's own migrations. CI runs them
   against Postgres 18.

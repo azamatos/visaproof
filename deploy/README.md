@@ -39,8 +39,9 @@ that's still running, so runs can't overlap.
 read-only user whose password `deploy.sh` generates into `.env` (`WEB_DB_PASSWORD`). The shared Caddy in `/srv/edge`
 serves it at `visaproof.azamatos.com` from `deploy/caddy/sponsored.caddy`, which `deploy.sh` copies in only after
 Caddy accepts the whole configuration with it. Cloudflare proxies the domain (DNS: an `A` record, proxied; SSL/TLS
-mode Full (strict)); Caddy gets the certificate itself. Until the public launch the site sends
-`X-Robots-Tag: noindex`.
+mode Full (strict)); Caddy gets the certificate itself. Search engines may index the site since
+2026-10-27: `NUXT_PUBLIC_INDEXABLE` in `compose.yml` (`INDEXABLE=false` in `.env` turns it off) sets the robots
+header, the meta tags and robots.txt together.
 
 ## Alerts
 
