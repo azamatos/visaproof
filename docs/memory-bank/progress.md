@@ -177,3 +177,6 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
   pinned posts set through the bot; the owner's share image (drawn live) and icons from Claude Design, replacing the
   agent's per-page images; the header's Telegram link from a new design board. PRs #2–#5 had code reviews; 50
   findings fixed in all (#6, the header link, was small enough for CI alone).
+- 2026-10-28: LinkedIn's Post Inspector read the title and description but said "No image found": the share image
+  no longer says `X-Robots-Tag: noindex` (the only unusual thing about it; the API keeps it). Deployed; the owner
+  re-checks in Post Inspector.

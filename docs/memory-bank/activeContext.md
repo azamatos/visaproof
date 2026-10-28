@@ -1,6 +1,6 @@
 # Active context
 
-**Updated 2026-10-27.** Read this first. The next session starts with "Next steps" below.
+**Updated 2026-10-28.** Read this first. The next session starts with "Next steps" below.
 
 ## Where things stand
 
@@ -92,6 +92,10 @@
 - Google Search Console and Bing Webmaster Tools: add the site and submit
   `https://visaproof.azamatos.com/sitemap.xml`. A Domain property for `azamatos.com` already covers the subdomain;
   otherwise verifying is a DNS record (or a meta tag an agent adds). Bing can import the site from Search Console.
+- LinkedIn's Post Inspector: run the home page again once Cloudflare's copies from before the fix expire (after
+  about 11:30 UTC on 2026-10-28). The share image no longer says `noindex` (2026-10-28). If the image is still
+  missing, look at Cloudflare's Security → Events for blocked LinkedIn requests. Author and publish date are only
+  informational in Post Inspector (the card doesn't show them); the site sets neither.
 - Thu Oct 29: review the site on a phone and a desktop.
 - Optional: a share image per role or company, if the owner designs one (every page uses the site's now).
 
