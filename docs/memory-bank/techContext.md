@@ -179,7 +179,8 @@ reloads daily. The first round covers the 100 biggest employers in each of the N
   Graph and X tags and the site's share image (`/og/site.png`, the same for every page). Closed
   roles, company pages with no open roles, filtered searches and 404s say `noindex`. Sitemaps (`/sitemap.xml` →
   pages, companies, jobs) list only open roles and the companies and countries that have them; robots.txt keeps
-  crawlers out of `/api/`. The home page names the site for search results (WebSite in JSON-LD). Indexing is on
+  crawlers out of `/api/`, and the API says `noindex`; the share image says nothing (with `noindex` on it,
+  LinkedIn dropped the image from link previews, 2026-10-28). The home page names the site for search results (WebSite in JSON-LD). Indexing is on
   on the server since 2026-10-27; with it off (the default, so local runs and tests) every page and response says
   `noindex, nofollow`. Lighthouse SEO 100 with it on
   (2026-10-27, local build).

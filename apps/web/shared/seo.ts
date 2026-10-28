@@ -14,11 +14,11 @@ export function robotsMeta(indexable: boolean, index: boolean): string {
   return index ? "index, follow, max-image-preview:large" : "noindex, follow";
 }
 
-// The X-Robots-Tag header of any response, pages and files alike; null for none. The API and the share images are
-// never search results.
+// The X-Robots-Tag header of any response, pages and files alike; null for none. The API is never a search result.
+// The share images get no header: with noindex on them, LinkedIn showed links without their image (2026-10-28).
 export function robotsHeader(indexable: boolean, path: string): string | null {
   if (!indexable) return "noindex, nofollow";
-  return path.startsWith("/api/") || path.startsWith("/og/") ? "noindex" : null;
+  return path.startsWith("/api/") ? "noindex" : null;
 }
 
 export function robotsTxt(indexable: boolean, siteUrl: string): string {

@@ -8,12 +8,12 @@ describe("robots", () => {
     expect(robotsHeader(false, "/og/site.png")).toBe("noindex, nofollow");
     expect(robotsTxt(false, "https://visaproof.azamatos.com")).not.toContain("Sitemap:");
   });
-  it("with indexing on, indexes pages but not the API or the share images", () => {
+  it("with indexing on, indexes pages but not the API; the share images carry no header", () => {
     expect(robotsMeta(true, true)).toBe("index, follow, max-image-preview:large");
     expect(robotsMeta(true, false)).toBe("noindex, follow");
     expect(robotsHeader(true, "/jobs/1")).toBeNull();
     expect(robotsHeader(true, "/api/roles")).toBe("noindex");
-    expect(robotsHeader(true, "/og/site.png")).toBe("noindex");
+    expect(robotsHeader(true, "/og/site.png")).toBeNull();
     expect(robotsTxt(true, "https://visaproof.azamatos.com")).toBe(
       "# Visaproof: developer jobs in Europe, visa answer first.\nUser-agent: *\nDisallow: /api/\n\nSitemap: https://visaproof.azamatos.com/sitemap.xml\n",
     );
